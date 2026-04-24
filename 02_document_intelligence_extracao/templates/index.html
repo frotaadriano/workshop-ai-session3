@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Intelligence Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 30px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 36px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #0066cc;
+      margin-bottom: 6px;
+    }
+
+    .descricao {
+      color: #666;
+      margin-bottom: 28px;
+      font-size: 0.97rem;
+      line-height: 1.5;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0052a3;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      display: none;
+    }
+
+    .status.processando {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+    }
+
+    .status.sucesso {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #28a745;
+    }
+
+    .status.erro {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #dc3545;
+    }
+
+    .card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      color: #0066cc;
+    }
+
+    .card pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.88rem;
+      background: #fff;
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📄 Document Intelligence Demo</h1>
+    <p class="descricao">
+      Faça upload de um documento (PDF ou imagem) e veja como o
+      <strong>Azure Document Intelligence</strong> extrai o texto automaticamente.
+      <br/>Este é um exemplo didático para o workshop de IA.
+    </p>
+
+    <form id="formulario">
+      <label for="arquivo">Selecione um documento:</label>
+      <input type="file" id="arquivo" name="arquivo" accept=".pdf,.png,.jpg,.jpeg" required />
+      <button type="submit">🚀 Processar documento</button>
+    </form>
+
+    <!-- Área de status -->
+    <div class="status" id="status"></div>
+
+    <!-- Card: Texto extraído -->
+    <div class="card" id="card-texto">
+      <h2>📝 Texto extraído</h2>
+      <pre id="texto-extraido"></pre>
+    </div>
+
+    <!-- Card: Informações estruturadas -->
+    <div class="card" id="card-info">
+      <h2>📊 Informações estruturadas</h2>
+      <pre id="info-estruturada"></pre>
+    </div>
+  </div>
+
+  <script>
+    // Intercepta o envio do formulário
+    document.getElementById("formulario").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const arquivo = document.getElementById("arquivo").files[0];
+      if (!arquivo) return;
+
+      // Mostra status de processamento
+      mostrarStatus("processando", "⏳ Processando documento... aguarde.");
+      esconderCards();
+
+      // Monta o FormData para enviar o arquivo
+      const formData = new FormData();
+      formData.append("arquivo", arquivo);
+
+      try {
+        // Envia para o backend
+        const resposta = await fetch("/processar", {
+          method: "POST",
+          body: formData
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          mostrarStatus("erro", "❌ Erro: " + (dados.detail || "Não foi possível processar o documento."));
+          return;
+        }
+
+        // Exibe os resultados
+        mostrarStatus("sucesso", "✅ Documento processado com sucesso!");
+        mostrarTexto(dados.texto_extraido);
+        mostrarInfo(dados.informacoes);
+
+      } catch (err) {
+        mostrarStatus("erro", "❌ Erro de conexão com o servidor.");
+      }
+    });
+
+    function mostrarStatus(tipo, mensagem) {
+      const el = document.getElementById("status");
+      el.className = "status " + tipo;
+      el.textContent = mensagem;
+      el.style.display = "block";
+    }
+
+    function mostrarTexto(texto) {
+      const card = document.getElementById("card-texto");
+      document.getElementById("texto-extraido").textContent = texto || "(sem texto extraído)";
+      card.style.display = "block";
+    }
+
+    function mostrarInfo(info) {
+      const card = document.getElementById("card-info");
+      document.getElementById("info-estruturada").textContent = info || "";
+      card.style.display = "block";
+    }
+
+    function esconderCards() {
+      document.getElementById("card-texto").style.display = "none";
+      document.getElementById("card-info").style.display = "none";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+Quero que você atue como um desenvolvedor sênior extremamente didático e pragmático, especializado em Python, FastAPI, HTML simples embutido e integrações com Azure AI Services.
+
+Seu objetivo é me ajudar a criar uma aplicação demo MUITO simples chamada:
+
+"Document Intelligence + extração estruturada"
+
+Contexto:
+- Esta app será usada em um workshop interno de introdução à IA.
+- O objetivo é demonstrar, de forma rápida, visual e didática, um fluxo simples de:
+  1. receber um documento pela interface
+  2. enviar esse documento para o Azure Document Intelligence
+  3. extrair o texto e/ou informações principais do documento
+  4. exibir o conteúdo extraído na tela
+  5. opcionalmente organizar esse conteúdo em uma estrutura mais legível
+  6. mostrar como IA pode ajudar em leitura e estruturação de documentos
+
+IMPORTANTE:
+- O foco é didática e clareza, não produção.
+- O projeto precisa ser extremamente simples.
+- O código deve ser fácil de entender para pessoas com pouca familiaridade com Python e IA.
+- Não usar arquitetura complexa.
+- Não usar frontend separado.
+- O HTML pode ser embutido no próprio backend, ou usar template mínimo.
+- Tudo deve rodar localmente.
+- O código deve estar pronto para eu demonstrar num workshop e também gravar a codificação depois.
+- Quero um app pequeno, com poucas etapas e poucos arquivos.
+- Quero mostrar valor visual rápido e entendimento fácil do fluxo.
+
+==================================================
+STACK E PADRÕES OBRIGATÓRIOS
+==================================================
+
+Use:
+- Python
+- FastAPI
+- HTML simples
+- CSS mínimo
+- Azure Document Intelligence
+- requests ou SDK oficial apenas se o uso ficar simples e didático
+
+Evitar:
+- React
+- Vue
+- Angular
+- LangChain
+- LangGraph
+- Semantic Kernel
+- LlamaIndex
+- Docker
+- banco de dados
+- autenticação
+- arquitetura em camadas desnecessária
+- classes complexas
+- excesso de arquivos
+
+==================================================
+ESTRUTURA DO PROJETO
+==================================================
+
+Quero que o projeto tenha algo simples como:
+
+02_document_intelligence_extracao/
+- app.py
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+Se precisar, pode sugerir também:
+- static/
+- templates/
+
+Mas só se realmente deixar o código mais claro.
+
+==================================================
+OBJETIVO FUNCIONAL DA APP
+==================================================
+
+A app deve ter uma interface simples com:
+
+- um título
+- uma breve descrição
+- um campo para upload de documento
+- um botão para processar
+- uma área para mostrar:
+  - status
+  - texto extraído
+  - informações estruturadas
+
+Fluxo esperado:
+1. usuário faz upload de um documento simples
+2. backend recebe o arquivo
+3. backend chama o Azure Document Intelligence
+4. backend obtém o texto e/ou conteúdo extraído
+5. backend organiza o retorno de forma fácil de entender
+6. a tela exibe:
+   - status do processamento
+   - texto extraído
+   - informações estruturadas em formato legível
+
+==================================================
+ESCOPO DIDÁTICO DO DOCUMENTO
+==================================================
+
+Prefira um caso demonstrativo simples.
+
+Pode assumir algo como:
+- PDF curto
+- imagem de documento simples
+- formulário simples
+- comprovante
+- texto escaneado de exemplo
+
+Se precisar escolher uma abordagem, prefira a mais simples para workshop:
+- extração textual geral
+- leitura básica de conteúdo
+- estruturação simples da resposta
+
+Evitar:
+- fluxos complexos
+- múltiplos tipos avançados de análise
+- cenários enterprise complexos
+- modelagem de documentos customizados
+- pipelines sofisticados
+
+==================================================
+REQUISITOS TÉCNICOS
+==================================================
+
+A aplicação deve usar variáveis de ambiente como:
+
+- AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
+- AZURE_DOCUMENT_INTELLIGENCE_KEY
+
+Se necessário, você pode sugerir também:
+- AZURE_DOCUMENT_INTELLIGENCE_API_VERSION
+
+Se possível, usar python-dotenv.
+
+Quero:
+- tratamento de erro simples
+- mensagens claras
+- funções pequenas
+- comentários em português
+- nomes de variáveis fáceis de entender
+- código legível acima de tudo
+
+==================================================
+COMPORTAMENTO DA EXTRAÇÃO E ESTRUTURAÇÃO
+==================================================
+
+Quero uma extração simples e didática.
+
+O backend deve, no mínimo:
+- enviar o documento para o serviço
+- recuperar o texto extraído
+- montar uma apresentação legível na tela
+
+Se fizer sentido, pode também montar uma estrutura resumida como:
+- quantidade de linhas
+- quantidade de palavras
+- primeiras linhas
+- texto consolidado
+
+Ou algum formato parecido que ajude a didática.
+
+Mas mantenha simples.
+
+==================================================
+REGRAS DE IMPLEMENTAÇÃO
+==================================================
+
+Quero que você siga estas regras durante toda a geração do projeto:
+
+1. Sempre priorize clareza acima de sofisticação.
+2. Sempre explique o que está fazendo.
+3. Crie funções pequenas.
+4. Evite abstrações desnecessárias.
+5. Comente o código em português.
+6. Gere algo fácil de rodar localmente.
+7. Sempre pense em didática de workshop.
+8. Não adicione features que eu não pedi.
+9. Não complique a interface.
+10. Após gerar código, sempre revise mentalmente se faltam imports, dependências, rotas ou tratamento de erro básico.
+11. Sempre considere que depois eu vou versionar cada etapa com Git.
+12. Gere um README curto com instruções de execução.
+13. Gere também um arquivo .env.example com as variáveis necessárias.
+
+==================================================
+REGRAS OBRIGATÓRIAS DE CHANGELOG
+==================================================
+
+Isto é MUITO importante.
+
+Quero que o arquivo `copilot-instructions.md` e o seu comportamento considerem que:
+
+- toda alteração relevante no projeto DEVE gerar atualização no `changelog.md`
+- nenhuma tarefa deve ser considerada concluída sem atualizar o `changelog.md`
+- ao final de cada etapa, você deve registrar no changelog:
+  - data ou marcador da etapa
+  - resumo do que foi alterado
+  - arquivos criados ou modificados
+  - motivo da alteração
+- se você alterar interface, backend, dependências, variáveis de ambiente, rotas ou documentação, isso deve entrar no changelog
+- se você gerar código e esquecer o changelog, considere a resposta incompleta e corrija isso
+- o changelog deve ser simples, legível e incremental
+- sempre que eu pedir uma mudança, você deve também propor a entrada correspondente de changelog
+- trate a atualização do changelog como parte obrigatória da implementação, não como opcional
+
+==================================================
+COPILOT INITIALIZATION / INSTRUÇÕES FIXAS
+==================================================
+
+Considere que este projeto terá um arquivo chamado "copilot-instructions.md" contendo regras permanentes do projeto.
+
+Quero que você também gere esse arquivo com orientações fortes e explícitas como:
+
+- manter o app simples e didático
+- usar Python + FastAPI
+- evitar arquitetura complexa
+- sempre revisar consistência antes de finalizar
+- sempre considerar execução local
+- sempre preservar legibilidade
+- sempre preferir funções pequenas
+- sempre buildar/testar após mudanças, quando aplicável
+- sempre documentar como rodar
+- SEMPRE atualizar o changelog a cada alteração relevante
+- NUNCA considerar uma tarefa concluída sem atualizar o changelog
+- ao alterar qualquer arquivo relevante, registrar isso no changelog
+- ao final de cada etapa, revisar se o changelog foi atualizado
+- tratar changelog como artefato obrigatório do projeto
+
+Quero que o arquivo `copilot-instructions.md` seja escrito de forma firme e operacional, para influenciar o comportamento do Copilot durante todas as próximas alterações.
+
+==================================================
+FORMA DE TRABALHO OBRIGATÓRIA
+==================================================
+
+Quero que você trabalhe em etapas.
+
+ETAPA 1:
+Primeiro, analise o projeto e proponha um plano enxuto em no máximo 3 etapas.
+Cada etapa deve ter:
+- nome
+- objetivo
+- o que será entregue
+
+ETAPA 2:
+Depois disso, gere a estrutura inicial do projeto com:
+- app.py inicial
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+ETAPA 3:
+Depois implemente a versão funcional mínima da app.
+
+==================================================
+DETALHES IMPORTANTES SOBRE A UI
+==================================================
+
+A interface pode ser bem simples, mas quero algo minimamente agradável:
+- título no topo
+- texto curto explicando o fluxo
+- campo de upload de arquivo
+- botão de processar
+- indicador visual de status
+- card ou área para texto extraído
+- card ou área para conteúdo estruturado
+- layout limpo
+- sem excesso de CSS
+
+==================================================
+DETALHES IMPORTANTES SOBRE DOCUMENT INTELLIGENCE
+==================================================
+
+A integração com Document Intelligence deve ser a forma mais simples e didática possível.
+
+Se houver mais de uma forma de integrar, escolha a mais simples para workshop.
+
+Se você precisar assumir algo, prefira:
+- upload de arquivo simples
+- processamento síncrono ou polling simples, se necessário
+- leitura textual básica
+- saída compreensível
+- sem custom model
+- sem cenários complexos
+
+Explique rapidamente:
+- o que está sendo enviado
+- o que volta da API
+- como o texto está sendo montado
+
+==================================================
+DETALHES IMPORTANTES SOBRE A ENTREGA
+==================================================
+
+Ao responder:
+1. Comece pelo plano em etapas.
+2. Depois gere os arquivos iniciais.
+3. Depois gere a implementação.
+4. Mostre o conteúdo completo dos arquivos.
+5. Seja organizado.
+6. Não omita trechos importantes.
+7. Se algo puder variar, explique rapidamente o porquê.
+8. Preserve simplicidade.
+
+No final, inclua também:
+- comando para criar venv
+- comando para instalar dependências
+- comando para rodar a app
+
+Se achar útil, também inclua sugestões de commits Git por etapa.
+
+Agora comece pela ETAPA 1: proponha o plano enxuto em até 3 etapas.
