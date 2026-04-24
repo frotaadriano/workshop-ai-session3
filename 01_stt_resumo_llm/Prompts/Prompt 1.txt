@@ -1,7 +1,3 @@
-==================
-Primeiro Prompt 
-==================
-
 Quero que você atue como um desenvolvedor sênior extremamente didático e pragmático, especializado em Python, FastAPI, HTML simples embutido e integrações com Azure AI Services.
 Seu objetivo é me ajudar a criar uma aplicação demo MUITO simples chamada:
 "STT + resumo com LLM"
