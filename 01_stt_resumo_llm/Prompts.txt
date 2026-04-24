@@ -1,0 +1,282 @@
+==================
+Primeiro Prompt 
+==================
+
+Quero que você atue como um desenvolvedor sênior extremamente didático e pragmático, especializado em Python, FastAPI, HTML simples embutido e integrações com Azure AI Services.
+Seu objetivo é me ajudar a criar uma aplicação demo MUITO simples chamada:
+"STT + resumo com LLM"
+
+Contexto:
+- Esta app será usada em um workshop interno de introdução à IA.
+- O objetivo é demonstrar, de forma rápida e visual, um fluxo simples de:
+  1. capturar áudio pela interface usando microfone
+  2. permitir que o usuário grave sua fala no navegador
+  3. enviar esse áudio gravado para o backend
+  4. transcrever o áudio com Speech to Text
+  5. exibir a transcrição na tela
+  6. enviar a transcrição para um LLM no Azure OpenAI
+  7. gerar um resumo curto e didático
+  8. exibir o resumo na tela
+
+IMPORTANTE:
+- O foco é didática e clareza, não produção.
+- O projeto precisa ser extremamente simples.
+- O código deve ser fácil de entender para pessoas com pouca familiaridade com Python e IA.
+- Não usar arquitetura complexa.
+- Não usar frontend separado.
+- O HTML pode ser embutido no próprio backend, ou usar template mínimo.
+- Tudo deve rodar localmente.
+- O código deve estar pronto para eu demonstrar num workshop e também gravar a codificação depois.
+- Quero um app pequeno, com poucas etapas e poucos arquivos.
+
+==================================================
+STACK E PADRÕES OBRIGATÓRIOS
+==================================================
+
+Use:
+- Python
+- FastAPI
+- HTML simples
+- CSS mínimo
+- JavaScript simples no frontend, apenas o necessário para capturar áudio do microfone
+- Azure Speech to Text
+- Azure OpenAI para gerar o resumo
+- requests ou SDK oficial apenas se o uso ficar simples e didático
+
+Evitar:
+- React
+- Vue
+- Angular
+- LangChain
+- LangGraph
+- Semantic Kernel
+- LlamaIndex
+- Docker
+- banco de dados
+- autenticação
+- arquitetura em camadas desnecessária
+- classes complexas
+- excesso de arquivos
+
+==================================================
+ESTRUTURA DO PROJETO
+==================================================
+
+Quero que o projeto tenha algo simples como:
+
+01_stt_resumo_llm/
+- app.py
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+Se precisar, pode sugerir também:
+- static/
+- templates/
+
+Mas só se realmente deixar o código mais claro.
+
+==================================================
+OBJETIVO FUNCIONAL DA APP
+==================================================
+
+A app deve ter uma interface simples com:
+
+- um título
+- uma breve descrição
+- um botão para iniciar gravação do microfone
+- um botão para parar gravação
+- um botão para enviar/processar o áudio gravado
+- uma área para mostrar:
+  - status da gravação
+  - status do processamento
+  - transcrição
+  - resumo
+
+Fluxo esperado:
+1. usuário clica para iniciar gravação
+2. a aplicação usa o microfone do navegador
+3. o usuário fala
+4. o usuário para a gravação
+5. o áudio gravado é enviado para o backend
+6. backend chama o serviço de Speech to Text da Azure
+7. backend obtém a transcrição
+8. backend chama o Azure OpenAI com um prompt simples de resumo
+9. backend devolve para a tela:
+   - texto transcrito
+   - resumo em tópicos curtos
+
+==================================================
+REQUISITOS TÉCNICOS
+==================================================
+
+A aplicação deve usar variáveis de ambiente como:
+
+- AZURE_SPEECH_KEY
+- AZURE_SPEECH_REGION
+- AZURE_OPENAI_API_KEY
+- AZURE_OPENAI_ENDPOINT
+- AZURE_OPENAI_API_VERSION
+- AZURE_OPENAI_CHAT_DEPLOYMENT
+
+Se possível, usar python-dotenv.
+
+Quero:
+- tratamento de erro simples
+- mensagens claras
+- funções pequenas
+- comentários em português
+- nomes de variáveis fáceis de entender
+- código legível acima de tudo
+
+==================================================
+PROMPT DO RESUMO
+==================================================
+
+O resumo gerado pelo Azure OpenAI deve ser simples e útil.
+Exemplo de comportamento esperado:
+- resumir em 3 a 5 tópicos
+- linguagem clara
+- tom corporativo amigável
+- destacar ideia principal
+- não inventar informações
+- se a transcrição vier vazia ou ruim, avisar isso
+
+Sugestão de instrução:
+“Resuma a transcrição em 3 a 5 tópicos curtos, em português do Brasil, com linguagem clara e objetiva. Se a transcrição estiver incompleta ou pouco compreensível, diga isso explicitamente.”
+
+==================================================
+REGRAS DE IMPLEMENTAÇÃO
+==================================================
+
+Quero que você siga estas regras durante toda a geração do projeto:
+
+1. Sempre priorize clareza acima de sofisticação.
+2. Sempre explique o que está fazendo.
+3. Crie funções pequenas.
+4. Evite abstrações desnecessárias.
+5. Comente o código em português.
+6. Gere algo fácil de rodar localmente.
+7. Sempre pense em didática de workshop.
+8. Não adicione features que eu não pedi.
+9. Não complique a interface.
+10. Após gerar código, sempre revise mentalmente se faltam imports, dependências, rotas ou tratamento de erro básico.
+11. Sempre que fizer uma etapa, atualize o changelog.
+12. Sempre considere que depois eu vou versionar cada etapa com Git.
+13. Gere um README curto com instruções de execução.
+14. Gere também um arquivo .env.example com as variáveis necessárias.
+
+==================================================
+COPILOT INITIALIZATION / INSTRUÇÕES FIXAS
+==================================================
+
+Considere que este projeto terá um arquivo chamado "copilot-instructions.md" contendo regras permanentes do projeto.
+
+Quero que você também gere esse arquivo com orientações como:
+- manter o app simples e didático
+- usar Python + FastAPI
+- evitar arquitetura complexa
+- sempre revisar consistência antes de finalizar
+- sempre atualizar changelog
+- sempre considerar execução local
+- sempre preservar legibilidade
+- sempre preferir funções pequenas
+- sempre buildar/testar após mudanças, quando aplicável
+- sempre documentar como rodar
+
+==================================================
+FORMA DE TRABALHO OBRIGATÓRIA
+==================================================
+
+Quero que você trabalhe em etapas.
+
+ETAPA 1:
+Primeiro, analise o projeto e proponha um plano enxuto em no máximo 3 etapas.
+Cada etapa deve ter:
+- nome
+- objetivo
+- o que será entregue
+
+ETAPA 2:
+Depois disso, gere a estrutura inicial do projeto com:
+- app.py inicial
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+ETAPA 3:
+Depois implemente a versão funcional mínima da app.
+
+==================================================
+DETALHES IMPORTANTES SOBRE A UI
+==================================================
+
+A interface pode ser bem simples, mas quero algo minimamente agradável:
+- título no topo
+- texto curto explicando o fluxo
+- botão de iniciar gravação
+- botão de parar gravação
+- botão de enviar/processar
+- indicação visual do status da gravação
+- caixas separadas para transcrição e resumo
+- layout limpo
+- sem excesso de CSS
+
+==================================================
+DETALHES IMPORTANTES SOBRE CAPTURA DE ÁUDIO
+==================================================
+
+A captura de áudio deve ser feita no navegador, da forma mais simples e didática possível.
+
+Preferências:
+- usar JavaScript simples
+- usar APIs nativas do navegador, como MediaRecorder, se isso for a opção mais simples
+- gravar áudio curto
+- permitir enviar o blob/arquivo gravado para o backend
+- manter o fluxo fácil de entender
+
+Não quero:
+- streaming em tempo real
+- websocket
+- complexidade de áudio em tempo real
+- interface sofisticada
+
+==================================================
+DETALHES IMPORTANTES SOBRE SPEECH TO TEXT
+==================================================
+
+A implementação do Speech to Text deve ser a forma mais simples e didática possível.
+Se houver mais de uma forma de integrar, escolha a mais simples para workshop.
+
+Se você precisar assumir algo, prefira:
+- áudio gravado e enviado pelo frontend
+- processamento síncrono simples
+- caso de uso demonstrativo
+- sem pipeline avançado
+
+==================================================
+DETALHES IMPORTANTES SOBRE A ENTREGA
+==================================================
+
+Ao responder:
+1. Comece pelo plano em etapas.
+2. Depois gere os arquivos iniciais.
+3. Depois gere a implementação.
+4. Mostre o conteúdo completo dos arquivos.
+5. Seja organizado.
+6. Não omita trechos importantes.
+7. Se algo puder variar, explique rapidamente o porquê.
+8. Preserve simplicidade.
+
+No final, inclua também:
+- comando para criar venv
+- comando para instalar dependências
+- comando para rodar a app
+
+Se achar útil, também inclua sugestões de commits Git por etapa.
+
+Agora comece pela ETAPA 1: proponha o plano enxuto em até 3 etapas.
