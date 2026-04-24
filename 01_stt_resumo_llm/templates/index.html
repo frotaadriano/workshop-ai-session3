@@ -4,444 +4,243 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STT + Resumo com LLM</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --orange:        #FF6B00;
-            --orange-hover:  #E05F00;
-            --orange-light:  #FFF3E9;
-            --orange-border: #FECDAA;
-            --purple:        #6B2D8B;
-            --purple-hover:  #5A2476;
-            --purple-light:  #F3EAF8;
-            --bg:            #F5F7FA;
-            --white:         #FFFFFF;
-            --text:          #1A1A2E;
-            --muted:         #6E7891;
-            --border:        #E2E5EF;
-            --success:       #1B8A4F;
-            --success-light: #E8F7EF;
-            --danger:        #C62828;
-            --info-bg:       #EEF2FF;
-            --info-border:   #6366F1;
-            --info-text:     #3730A3;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+            font-style: normal;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            white-space: nowrap;
+            vertical-align: middle;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* Animação de pulse do microfone durante gravação */
+        @keyframes pulse-ring {
+            0%   { box-shadow: 0 0 0 0   rgba(255, 95, 0, 0.45); }
+            70%  { box-shadow: 0 0 0 20px rgba(255, 95, 0, 0); }
+            100% { box-shadow: 0 0 0 0   rgba(255, 95, 0, 0); }
+        }
+        .mic-pulsing { animation: pulse-ring 1.5s ease-out infinite; }
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding-bottom: 60px;
-        }
-
-        /* ===== HEADER ===== */
-        .header {
-            background: var(--white);
-            border-bottom: 3px solid var(--orange);
-            padding: 18px 40px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .header-icon { font-size: 28px; }
-        .header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.3px;
-        }
-        .header p {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-        .badge {
-            margin-left: auto;
-            background: var(--orange-light);
-            color: var(--orange);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            border: 1px solid var(--orange-border);
-        }
-
-        /* ===== MAIN ===== */
-        .main {
-            max-width: 900px;
-            margin: 36px auto;
-            padding: 0 24px;
-        }
-
-        /* ===== STEP INDICATOR ===== */
-        .steps {
-            display: flex;
-            align-items: center;
-            background: var(--white);
-            border-radius: 12px;
-            padding: 20px 32px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            margin-bottom: 24px;
-        }
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-        .step-circle {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            border: 2px solid var(--border);
-            background: var(--bg);
-            color: var(--muted);
-            flex-shrink: 0;
-            transition: all 0.35s ease;
-        }
-        .step-text strong {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            transition: color 0.35s;
-        }
-        .step-text span {
-            font-size: 11px;
-            color: var(--muted);
-            opacity: 0.7;
-        }
-        .step-line {
-            flex: 1;
-            height: 2px;
-            background: var(--border);
-            margin: 0 6px;
-            max-width: 72px;
-            transition: background 0.35s;
-        }
-
-        .step.active .step-circle {
-            background: var(--orange);
-            border-color: var(--orange);
-            color: white;
-            box-shadow: 0 0 0 4px var(--orange-light);
-        }
-        .step.active .step-text strong { color: var(--orange); }
-
-        .step.done .step-circle {
-            background: var(--success);
-            border-color: var(--success);
-            color: white;
-        }
-        .step.done .step-text strong { color: var(--success); }
-        .step-line.done { background: var(--success); }
-
-        /* ===== STATUS BAR ===== */
-        .status-bar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 13px 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            background: var(--info-bg);
-            border-left: 4px solid var(--info-border);
-            color: var(--info-text);
-            transition: background 0.3s, border-color 0.3s, color 0.3s;
-            line-height: 1.5;
-        }
-        .status-bar.recording  { background: #FFF0F0; border-left-color: var(--danger); color: var(--danger); }
-        .status-bar.success    { background: var(--success-light); border-left-color: var(--success); color: var(--success); }
-        .status-bar.error      { background: #FFF3E0; border-left-color: #FF8F00; color: #E65100; }
-        .status-bar.processing { background: var(--purple-light); border-left-color: var(--purple); color: var(--purple); }
-
-        /* ===== CARD DE GRAVAÇÃO ===== */
-        .card {
-            background: var(--white);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .card-header {
-            padding: 14px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .card-header h2 {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--purple);
-        }
-
-        .recording-area {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-            padding: 28px 32px;
-        }
-
-        .mic-container { text-align: center; flex-shrink: 0; }
-        .mic-visual {
-            width: 88px;
-            height: 88px;
-            border-radius: 50%;
-            border: 3px solid var(--border);
-            background: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            transition: all 0.3s;
-            margin: 0 auto 10px;
-        }
-        .mic-visual.recording {
-            background: #FFF0F0;
-            border-color: var(--danger);
-            animation: pulse 1.5s ease-out infinite;
-        }
-        .mic-visual.done {
-            background: var(--success-light);
-            border-color: var(--success);
-        }
-        @keyframes pulse {
-            0%   { box-shadow: 0 0 0 0   rgba(198, 40, 40, 0.35); }
-            70%  { box-shadow: 0 0 0 18px rgba(198, 40, 40, 0); }
-            100% { box-shadow: 0 0 0 0   rgba(198, 40, 40, 0); }
-        }
-        .mic-label { font-size: 13px; font-weight: 600; color: var(--muted); }
-        .mic-label.recording { color: var(--danger); }
-        .mic-label.done      { color: var(--success); }
-
-        .controls { flex: 1; }
-        .controls-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-        .controls-sub   { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-        .buttons { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        /* ===== BOTÕES ===== */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 11px 22px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-
-        .btn-start   { background: var(--orange); color: white; }
-        .btn-start:not(:disabled):hover { background: var(--orange-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,107,0,0.35); }
-
-        .btn-stop    { background: var(--danger); color: white; }
-        .btn-stop:not(:disabled):hover { background: #B71C1C; }
-
-        .btn-process { background: var(--purple); color: white; }
-        .btn-process:not(:disabled):hover { background: var(--purple-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(107,45,139,0.35); }
-
-        .audio-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            background: var(--success-light);
-            color: var(--success);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            margin-top: 14px;
-            border: 1px solid #A7F3D0;
-        }
-
-        /* ===== GRID DE RESULTADOS ===== */
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 640px) { .results-grid { grid-template-columns: 1fr; } }
-
-        .result-card {
-            background: var(--white);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            overflow: hidden;
-        }
-        .result-header {
-            padding: 13px 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-        .result-header.stt    { background: var(--info-bg); border-bottom-color: #C7D2FE; }
-        .result-header.resumo { background: var(--orange-light); border-bottom-color: var(--orange-border); }
-        .result-header h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .result-header.stt h3    { color: #4338CA; }
-        .result-header.resumo h3 { color: var(--orange); }
-
-        .result-body {
-            padding: 18px 20px;
-            font-size: 14px;
-            line-height: 1.75;
-            color: var(--text);
-            white-space: pre-wrap;
-            min-height: 110px;
-        }
-        .placeholder { color: var(--muted); font-style: italic; font-size: 13px; }
-
+        /* Spinner para o botão de processamento */
+        @keyframes spin { to { transform: rotate(360deg); } }
         .spinner {
             display: inline-block;
-            width: 14px; height: 14px;
+            width: 13px; height: 13px;
             border: 2px solid rgba(255,255,255,0.4);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
+            vertical-align: middle;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="font-sans bg-[#fff8f6] text-[#271812] min-h-screen flex flex-col">
 
-<!-- ===== HEADER ===== -->
-<div class="header">
-    <div class="header-icon">🎙️</div>
-    <div>
-        <h1>STT + Resumo com LLM</h1>
-        <p>Azure Speech to Text · Azure OpenAI · Workshop IA</p>
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-white border-b border-slate-200 shadow-sm">
+    <div class="text-xl font-bold tracking-tight text-slate-900">STT + Resumo com LLM</div>
+    <div class="flex items-center gap-1">
+        <button class="material-symbols-outlined p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">settings</button>
+        <button class="material-symbols-outlined p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">help</button>
     </div>
-    <div class="badge">Demo</div>
-</div>
+</header>
 
-<div class="main">
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main class="mt-24 mb-16 flex-grow px-8 max-w-[1280px] mx-auto w-full">
 
-    <!-- ===== STEP INDICATOR ===== -->
-    <div class="steps">
-        <div class="step active" id="step-1">
-            <div class="step-circle">1</div>
-            <div class="step-text">
-                <strong>Gravação</strong>
-                <span>Use o microfone</span>
+    <!-- HERO -->
+    <section class="mb-10">
+        <h1 class="text-5xl font-bold leading-tight tracking-tight text-[#271812] mb-3">
+            STT + Resumo com LLM
+        </h1>
+        <p class="text-lg text-[#5b4137] max-w-2xl leading-relaxed">
+            Inteligência Artificial para Transcrição e Síntese de Reuniões.
+            Transforme diálogos em insights estruturados instantaneamente.
+        </p>
+    </section>
+
+    <!-- STEP INDICATOR -->
+    <div class="bg-white border border-[#E0E0E0] rounded-xl px-8 py-5 mb-6 flex items-center">
+        <!-- Step 1 -->
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-350"
+                 id="step-1-circle"
+                 style="background:#fff8f6; border-color:#ff5f00; color:#ff5f00; box-shadow:0 0 0 4px #ffdbce;">1</div>
+            <div>
+                <strong class="block text-sm font-semibold transition-colors duration-300" id="step-1-label" style="color:#ff5f00;">Gravação</strong>
+                <span class="text-xs text-[#5b4137] opacity-70">Use o microfone</span>
             </div>
         </div>
-        <div class="step-line" id="line-12"></div>
-        <div class="step" id="step-2">
-            <div class="step-circle">2</div>
-            <div class="step-text">
-                <strong>Processamento</strong>
-                <span>STT → LLM</span>
+        <div class="flex-1 h-px mx-5 max-w-[80px] transition-all duration-500" id="line-12" style="background:#E0E0E0;"></div>
+        <!-- Step 2 -->
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-350"
+                 id="step-2-circle"
+                 style="background:#fff8f6; border-color:#E0E0E0; color:#5b4137;">2</div>
+            <div>
+                <strong class="block text-sm font-semibold transition-colors duration-300" id="step-2-label" style="color:#5b4137;">Processamento</strong>
+                <span class="text-xs text-[#5b4137] opacity-70">STT → LLM</span>
             </div>
         </div>
-        <div class="step-line" id="line-23"></div>
-        <div class="step" id="step-3">
-            <div class="step-circle">3</div>
-            <div class="step-text">
-                <strong>Resultado</strong>
-                <span>Transcrição + Resumo</span>
+        <div class="flex-1 h-px mx-5 max-w-[80px] transition-all duration-500" id="line-23" style="background:#E0E0E0;"></div>
+        <!-- Step 3 -->
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-350"
+                 id="step-3-circle"
+                 style="background:#fff8f6; border-color:#E0E0E0; color:#5b4137;">3</div>
+            <div>
+                <strong class="block text-sm font-semibold transition-colors duration-300" id="step-3-label" style="color:#5b4137;">Resultado</strong>
+                <span class="text-xs text-[#5b4137] opacity-70">Transcrição + Resumo</span>
             </div>
         </div>
     </div>
 
-    <!-- ===== STATUS BAR ===== -->
-    <div class="status-bar" id="status-bar">
-        💡 Clique em <strong>&nbsp;Iniciar Gravação&nbsp;</strong> para começar. Fale claramente próximo ao microfone.
-    </div>
+    <!-- RECORDING CARD -->
+    <div class="bg-white border border-[#E0E0E0] rounded-xl p-8 mb-6 transition-all hover:shadow-[0px_10px_30px_rgba(0,0,0,0.04)]">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
 
-    <!-- ===== CARD DE GRAVAÇÃO ===== -->
-    <div class="card">
-        <div class="card-header">
-            <span>🎤</span>
-            <h2>Captura de Áudio</h2>
-        </div>
-        <div class="recording-area">
-
-            <div class="mic-container">
-                <div class="mic-visual" id="mic-visual">🎙️</div>
-                <div class="mic-label" id="mic-label">Aguardando</div>
-            </div>
-
-            <div class="controls">
-                <div class="controls-title" id="controls-title">Pronto para gravar</div>
-                <div class="controls-sub" id="controls-sub">
-                    Clique em <strong>Iniciar Gravação</strong>, fale, depois clique em <strong>Parar</strong>
-                    e em seguida em <strong>Processar Áudio</strong>.
+            <!-- Mic visual + info -->
+            <div class="flex items-center gap-6">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300"
+                     id="mic-visual" style="background:#ffdbce;">
+                    <span class="material-symbols-outlined text-[40px] transition-colors duration-300"
+                          id="mic-icon"
+                          style="color:#a63b00; font-variation-settings:'FILL' 1;">mic</span>
                 </div>
-                <div class="buttons">
-                    <button class="btn btn-start"   id="btn-iniciar">🎙️ Iniciar Gravação</button>
-                    <button class="btn btn-stop"    id="btn-parar"   disabled>⏹️ Parar Gravação</button>
-                    <button class="btn btn-process" id="btn-enviar"  disabled>
-                        <span id="btn-enviar-label">📤 Processar Áudio</span>
-                    </button>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2.5 h-2.5 rounded-full transition-colors duration-300" id="status-dot" style="background:#10b981;"></div>
+                        <span class="text-xs font-bold uppercase tracking-widest transition-colors duration-300" id="mic-label" style="color:#059669;">Ready to Record</span>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-[#271812]" id="controls-title">Central de Captura</h2>
+                    <p class="text-[#5b4137] mt-0.5" id="controls-sub">Conecte seu microfone para iniciar a transcrição em tempo real.</p>
                 </div>
-                <div id="audio-badge-area"></div>
             </div>
 
+            <!-- Botões -->
+            <div class="flex flex-wrap gap-4 items-center">
+                <button id="btn-iniciar"
+                        class="px-7 py-3 bg-[#ff5f00] text-white rounded-lg text-sm font-bold hover:bg-[#e05500] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">play_circle</span>
+                    Iniciar Gravação
+                </button>
+                <button id="btn-parar" disabled
+                        class="px-7 py-3 border-2 border-[#8f4089] text-[#8f4089] rounded-lg text-sm font-bold hover:bg-[#f3eaf8] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">stop_circle</span>
+                    Parar Gravação
+                </button>
+                <button id="btn-enviar" disabled
+                        class="px-7 py-3 rounded-lg text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style="background:#f9dcd2; color:#5b4137;">
+                    <span class="material-symbols-outlined text-[18px]">analytics</span>
+                    <span id="btn-enviar-label">Processar Áudio</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status do sistema -->
+        <div class="mt-8 pt-6 border-t border-[#E0E0E0]">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-semibold text-[#5b4137]">Status do Sistema</span>
+                <span class="text-sm font-semibold transition-colors duration-300" id="status-text" style="color:#a63b00;">
+                    Aguardando áudio...
+                </span>
+            </div>
+            <!-- Barra de progresso das etapas -->
+            <div class="w-full h-1.5 bg-[#ffe2d8] rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500 ease-out" id="progress-bar"
+                     style="width:5%; background:#ff5f00;"></div>
+            </div>
+            <!-- Badge do áudio capturado -->
+            <div id="audio-badge-area" class="mt-3"></div>
         </div>
     </div>
 
-    <!-- ===== RESULTADOS ===== -->
-    <div class="results-grid">
+    <!-- RESULTADOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <div class="result-card">
-            <div class="result-header stt">
-                <span>📝</span>
-                <h3>Transcrição (STT)</h3>
-            </div>
-            <div class="result-body" id="texto-transcricao">
-                <span class="placeholder">O texto transcrito aparecerá aqui após o processamento.</span>
+        <!-- Card Transcrição -->
+        <div class="lg:col-span-7">
+            <div class="bg-white border border-[#E0E0E0] rounded-xl flex flex-col h-full hover:shadow-[0px_10px_30px_rgba(0,0,0,0.04)] transition-all">
+                <div class="p-6 border-b border-[#E0E0E0] flex items-center gap-2 rounded-t-xl bg-white">
+                    <span class="material-symbols-outlined text-[#8f4089]">description</span>
+                    <h3 class="text-xl font-semibold text-[#271812]">Transcrição do Áudio</h3>
+                </div>
+                <div class="p-8 flex-1">
+                    <div id="texto-transcricao"
+                         class="text-base leading-relaxed whitespace-pre-wrap min-h-[120px] italic text-[#5b4137]">
+                        O texto transcrito aparecerá aqui após o processamento.
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="result-card">
-            <div class="result-header resumo">
-                <span>✨</span>
-                <h3>Resumo por IA</h3>
-            </div>
-            <div class="result-body" id="texto-resumo">
-                <span class="placeholder">O resumo gerado pela IA aparecerá aqui após o processamento.</span>
+        <!-- Card Resumo -->
+        <div class="lg:col-span-5">
+            <div class="bg-white border border-[#E0E0E0] rounded-xl flex flex-col h-full hover:shadow-[0px_10px_30px_rgba(0,0,0,0.04)] transition-all">
+                <div class="p-6 border-b border-[#E0E0E0] flex items-center justify-between rounded-t-xl"
+                     style="background:#732770;">
+                    <h3 class="text-xl font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+                        Resumo com IA (Tópicos)
+                    </h3>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-white px-3 py-1 rounded-full"
+                          style="background:#a63b00;">IA</span>
+                </div>
+                <div class="p-8 flex-1">
+                    <div id="texto-resumo"
+                         class="text-base leading-relaxed whitespace-pre-wrap min-h-[120px] italic text-[#5b4137]">
+                        O resumo gerado pela IA aparecerá aqui após o processamento.
+                    </div>
+                </div>
             </div>
         </div>
 
     </div>
+</main>
 
-</div>
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="w-full py-8 px-8 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900 border-t border-slate-800 text-sm font-medium text-slate-400">
+    <div class="flex items-center gap-2">
+        <span class="text-lg font-black text-white">STT + Resumo com LLM</span>
+        <span class="opacity-40">|</span>
+        <span>Workshop IA · Azure AI Services</span>
+    </div>
+    <div class="text-slate-500 opacity-80">© 2026 Workshop IA</div>
+</footer>
 
 <script>
     // ============================================================
     // CONVERSÃO PARA WAV
-    // O Azure Speech to Text aceita WAV PCM com garantia total.
-    // O MediaRecorder grava em WebM/Opus (padrão do Chrome),
-    // que pode falhar no Azure. Por isso convertemos aqui.
+    // O Azure Speech to Text exige WAV PCM 16kHz mono.
+    // O MediaRecorder grava em WebM/Opus — convertemos aqui.
     // ============================================================
 
     async function converterParaWav(blob) {
         const arrayBuffer = await blob.arrayBuffer();
         const ctx = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-        const pcm = audioBuffer.getChannelData(0);
+        const pcm = audioBuffer.getChannelData(0);    // canal 0 = mono
         const wavBuffer = montarWav(pcm, 16000);
         await ctx.close();
         return new Blob([wavBuffer], { type: 'audio/wav' });
@@ -450,25 +249,20 @@
     function montarWav(pcm, taxa) {
         const buf  = new ArrayBuffer(44 + pcm.length * 2);
         const view = new DataView(buf);
-
-        function txt(offset, s) {
-            for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
-        }
-
+        function txt(off, s) { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
         txt(0,  'RIFF');
         view.setUint32(4,  36 + pcm.length * 2, true);
         txt(8,  'WAVE');
         txt(12, 'fmt ');
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true);   // PCM
-        view.setUint16(22, 1, true);   // mono
-        view.setUint32(24, taxa, true);
-        view.setUint32(28, taxa * 2, true);
-        view.setUint16(32, 2, true);
-        view.setUint16(34, 16, true);
+        view.setUint32(16, 16,      true);
+        view.setUint16(20, 1,       true);   // PCM
+        view.setUint16(22, 1,       true);   // mono
+        view.setUint32(24, taxa,    true);
+        view.setUint32(28, taxa*2,  true);
+        view.setUint16(32, 2,       true);
+        view.setUint16(34, 16,      true);
         txt(36, 'data');
         view.setUint32(40, pcm.length * 2, true);
-
         let off = 44;
         for (let i = 0; i < pcm.length; i++) {
             const s = Math.max(-1, Math.min(1, pcm[i]));
@@ -479,39 +273,93 @@
     }
 
     // ============================================================
-    // ESTADO
+    // REFERÊNCIAS DOM
     // ============================================================
-
     let gravador    = null;
     let chunksAudio = [];
     let blobWav     = null;
 
-    const btnIniciar = document.getElementById('btn-iniciar');
-    const btnParar   = document.getElementById('btn-parar');
-    const btnEnviar  = document.getElementById('btn-enviar');
-    const micVisual  = document.getElementById('mic-visual');
-    const micLabel   = document.getElementById('mic-label');
-    const ctrlTitle  = document.getElementById('controls-title');
-    const ctrlSub    = document.getElementById('controls-sub');
-    const statusBar  = document.getElementById('status-bar');
-    const badgeArea  = document.getElementById('audio-badge-area');
-    const divTransc  = document.getElementById('texto-transcricao');
-    const divResumo  = document.getElementById('texto-resumo');
+    const btnIniciar  = document.getElementById('btn-iniciar');
+    const btnParar    = document.getElementById('btn-parar');
+    const btnEnviar   = document.getElementById('btn-enviar');
+    const micVisual   = document.getElementById('mic-visual');
+    const micIcon     = document.getElementById('mic-icon');
+    const micLabel    = document.getElementById('mic-label');
+    const statusDot   = document.getElementById('status-dot');
+    const ctrlTitle   = document.getElementById('controls-title');
+    const ctrlSub     = document.getElementById('controls-sub');
+    const statusText  = document.getElementById('status-text');
+    const progressBar = document.getElementById('progress-bar');
+    const badgeArea   = document.getElementById('audio-badge-area');
+    const divTransc   = document.getElementById('texto-transcricao');
+    const divResumo   = document.getElementById('texto-resumo');
 
+    // ============================================================
+    // CONTROLE VISUAL DAS ETAPAS
+    // ============================================================
     function setEtapa(atual) {
+        const estilos = {
+            active: { bg: '#fff8f6', border: '#ff5f00', color: '#ff5f00', shadow: '0 0 0 4px #ffdbce' },
+            done:   { bg: '#1B8A4F', border: '#1B8A4F', color: 'white',   shadow: 'none' },
+            idle:   { bg: '#fff8f6', border: '#E0E0E0', color: '#5b4137', shadow: 'none' },
+        };
+        const coresLabel = { active: '#ff5f00', done: '#1B8A4F', idle: '#5b4137' };
+        const progressos = { 1: '10%', 2: '55%', 3: '100%' };
+
         for (let i = 1; i <= 3; i++) {
-            const el = document.getElementById(`step-${i}`);
-            el.classList.remove('active', 'done');
-            if (i < atual)   el.classList.add('done');
-            if (i === atual) el.classList.add('active');
+            const circle = document.getElementById(`step-${i}-circle`);
+            const label  = document.getElementById(`step-${i}-label`);
+            const estado = i < atual ? 'done' : i === atual ? 'active' : 'idle';
+            const e = estilos[estado];
+            circle.style.background  = e.bg;
+            circle.style.borderColor = e.border;
+            circle.style.color       = e.color;
+            circle.style.boxShadow   = e.shadow;
+            circle.textContent       = estado === 'done' ? '✓' : i;
+            label.style.color        = coresLabel[estado];
         }
-        document.getElementById('line-12').className = 'step-line' + (atual > 1 ? ' done' : '');
-        document.getElementById('line-23').className = 'step-line' + (atual > 2 ? ' done' : '');
+        document.getElementById('line-12').style.background = atual > 1 ? '#1B8A4F' : '#E0E0E0';
+        document.getElementById('line-23').style.background = atual > 2 ? '#1B8A4F' : '#E0E0E0';
+        progressBar.style.width = progressos[atual] || '5%';
     }
 
+    // ============================================================
+    // ATUALIZAÇÃO DO STATUS
+    // ============================================================
     function setStatus(html, tipo) {
-        statusBar.innerHTML = html;
-        statusBar.className = 'status-bar ' + (tipo || '');
+        statusText.innerHTML = html;
+        const cores = {
+            recording:  '#C62828',
+            success:    '#1B8A4F',
+            error:      '#E65100',
+            processing: '#732770',
+            '':         '#a63b00',
+        };
+        const dots = {
+            recording:  '#EF4444',
+            success:    '#10B981',
+            error:      '#F97316',
+            processing: '#8f4089',
+            '':         '#10B981',
+        };
+        statusText.style.color    = cores[tipo || ''] || '#a63b00';
+        statusDot.style.background = dots[tipo || ''] || '#10B981';
+
+        // Cor da barra de progresso
+        const barCores = { recording: '#ef4444', processing: '#732770', success: '#1B8A4F', error: '#F97316' };
+        progressBar.style.background = barCores[tipo] || '#ff5f00';
+    }
+
+    // Ativa visualmente o botão Processar quando disponível
+    function setBtnEnviar(ativo) {
+        btnEnviar.disabled = !ativo;
+        if (ativo) {
+            btnEnviar.style.background = '#ff5f00';
+            btnEnviar.style.color      = 'white';
+        } else {
+            btnEnviar.style.background = '#f9dcd2';
+            btnEnviar.style.color      = '#5b4137';
+        }
     }
 
     // ============================================================
@@ -525,52 +373,64 @@
             badgeArea.innerHTML = '';
 
             gravador = new MediaRecorder(stream);
-
-            gravador.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksAudio.push(e.data);
-            };
+            gravador.ondataavailable = (e) => { if (e.data.size > 0) chunksAudio.push(e.data); };
 
             gravador.onstop = async () => {
                 stream.getTracks().forEach(t => t.stop());
                 const blobOriginal = new Blob(chunksAudio, { type: gravador.mimeType });
-
                 setStatus('⏳ Convertendo áudio para WAV...', 'processing');
 
                 try {
                     blobWav = await converterParaWav(blobOriginal);
                     const kb = (blobWav.size / 1024).toFixed(1);
-                    badgeArea.innerHTML = `<div class="audio-badge">✅ Áudio pronto · ${kb} KB · WAV 16kHz mono</div>`;
-                    setStatus('✅ Gravação concluída. Clique em <strong>&nbsp;Processar Áudio&nbsp;</strong> para transcrever.', 'success');
+                    badgeArea.innerHTML = `
+                        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;
+                            background:#E8F7EF;color:#1B8A4F;border:1px solid #A7F3D0;
+                            padding:4px 14px;border-radius:20px;font-weight:600;">
+                            ✅ Áudio pronto · ${kb} KB · WAV 16kHz mono
+                        </span>`;
+                    setStatus('✅ Gravação concluída. Clique em <strong>Processar Áudio</strong>.', 'success');
                 } catch (errConv) {
                     blobWav = blobOriginal;
                     const kb = (blobWav.size / 1024).toFixed(1);
-                    badgeArea.innerHTML = `<div class="audio-badge">⚠️ Áudio pronto · ${kb} KB (formato original)</div>`;
-                    setStatus('✅ Gravação concluída. Clique em <strong>&nbsp;Processar Áudio&nbsp;</strong>.', 'success');
+                    badgeArea.innerHTML = `
+                        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;
+                            background:#FFF3CD;color:#856404;border:1px solid #FFEEBA;
+                            padding:4px 14px;border-radius:20px;font-weight:600;">
+                            ⚠️ Áudio pronto · ${kb} KB (formato original)
+                        </span>`;
+                    setStatus('✅ Gravação concluída. Clique em <strong>Processar Áudio</strong>.', 'success');
                 }
 
-                micVisual.className   = 'mic-visual done';
-                micVisual.textContent = '✅';
-                micLabel.textContent  = 'Pronto';
-                micLabel.className    = 'mic-label done';
-                ctrlTitle.textContent = 'Gravação finalizada';
-                ctrlSub.textContent   = 'Clique em "Processar Áudio" para transcrever com o Azure STT.';
-                btnEnviar.disabled    = false;
-                btnIniciar.disabled   = false;
+                // Visual pós-gravação: ícone verde
+                micVisual.classList.remove('mic-pulsing');
+                micVisual.style.background = '#E8F7EF';
+                micIcon.style.color        = '#1B8A4F';
+                micIcon.textContent        = 'check_circle';
+                micLabel.textContent       = 'Gravação Pronta';
+                micLabel.style.color       = '#1B8A4F';
+                ctrlTitle.textContent      = 'Gravação finalizada';
+                ctrlSub.textContent        = 'Clique em "Processar Áudio" para transcrever com o Azure STT.';
+                setBtnEnviar(true);
+                btnIniciar.disabled = false;
             };
 
             gravador.start();
             setEtapa(1);
-            setStatus('🔴 Gravando... fale claramente. Clique em <strong>&nbsp;Parar Gravação&nbsp;</strong> quando terminar.', 'recording');
+            setStatus('🔴 Gravando... fale claramente. Clique em <strong>Parar</strong> quando terminar.', 'recording');
 
-            micVisual.className   = 'mic-visual recording';
-            micVisual.textContent = '🎙️';
-            micLabel.textContent  = 'Gravando';
-            micLabel.className    = 'mic-label recording';
+            // Visual durante gravação: pulse vermelho
+            micVisual.style.background = '#FFF0F0';
+            micVisual.classList.add('mic-pulsing');
+            micIcon.style.color  = '#C62828';
+            micIcon.textContent  = 'mic';
+            micLabel.textContent = 'Gravando';
+            micLabel.style.color = '#C62828';
             ctrlTitle.textContent = 'Gravação em andamento';
             ctrlSub.textContent   = 'Fale próximo ao microfone. Clique em Parar quando terminar.';
-            btnIniciar.disabled   = true;
-            btnParar.disabled     = false;
-            btnEnviar.disabled    = true;
+            btnIniciar.disabled = true;
+            btnParar.disabled   = false;
+            setBtnEnviar(false);
 
         } catch (erro) {
             setStatus('❌ Não foi possível acessar o microfone: ' + erro.message, 'error');
@@ -596,12 +456,14 @@
 
         setEtapa(2);
         setStatus('⏳ Enviando para o Azure Speech to Text...', 'processing');
-        btnEnviar.disabled  = true;
+        setBtnEnviar(false);
         btnIniciar.disabled = true;
         document.getElementById('btn-enviar-label').innerHTML = '<span class="spinner"></span> Processando...';
 
-        divTransc.innerHTML = '<span class="placeholder">Transcrevendo com Azure STT...</span>';
-        divResumo.innerHTML = '<span class="placeholder">Aguardando transcrição...</span>';
+        divTransc.className = 'text-base leading-relaxed whitespace-pre-wrap min-h-[120px] italic text-[#5b4137]';
+        divResumo.className = 'text-base leading-relaxed whitespace-pre-wrap min-h-[120px] italic text-[#5b4137]';
+        divTransc.textContent = 'Transcrevendo com Azure STT...';
+        divResumo.textContent = 'Aguardando transcrição...';
 
         const form = new FormData();
         form.append('audio', blobWav, 'gravacao.wav');
@@ -612,12 +474,15 @@
 
             if (dados.erro) {
                 setStatus('❌ Erro: ' + dados.erro, 'error');
-                divTransc.innerHTML = '<span class="placeholder">Erro no processamento.</span>';
-                divResumo.innerHTML = '<span class="placeholder">—</span>';
+                divTransc.textContent = 'Erro no processamento.';
+                divResumo.textContent = '—';
                 setEtapa(1);
             } else {
                 setEtapa(3);
                 setStatus('✅ Processamento concluído! Transcrição e resumo gerados com sucesso.', 'success');
+                // Remove o itálico ao exibir conteúdo real
+                divTransc.className = 'text-base leading-relaxed whitespace-pre-wrap min-h-[120px] text-[#271812]';
+                divResumo.className = 'text-base leading-relaxed whitespace-pre-wrap min-h-[120px] text-[#271812]';
                 divTransc.textContent = dados.transcricao || '(sem transcrição)';
                 divResumo.textContent = dados.resumo      || '(sem resumo)';
             }
@@ -627,8 +492,8 @@
             setEtapa(1);
         }
 
-        document.getElementById('btn-enviar-label').textContent = '📤 Processar Áudio';
-        btnEnviar.disabled  = false;
+        document.getElementById('btn-enviar-label').textContent = 'Processar Áudio';
+        setBtnEnviar(true);
         btnIniciar.disabled = false;
     });
 </script>

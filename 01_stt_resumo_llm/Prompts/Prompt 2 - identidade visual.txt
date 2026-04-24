@@ -1,0 +1,46 @@
+Crie o protótipo de uma aplicação web simples para demonstração de IA em workshop corporativo.
+
+Objetivo da tela:
+Uma app chamada “STT + Resumo com LLM”, onde o usuário grava áudio pelo microfone no navegador, envia esse áudio para processamento, visualiza a transcrição e depois vê um resumo em tópicos gerado por IA.
+Quero uma interface com estética corporativa moderna, limpa, tecnológica e elegante, inspirada em identidade visual da Avanade.
+
+Direção visual:
+- visual premium e profissional
+- estilo consultivo/corporativo
+- layout clean
+- aparência moderna e tecnológica
+- bastante respiro entre elementos
+- cards com cantos levemente arredondados
+- contraste bom
+- destaque visual para o botão principal
+- sensação de produto de inovação empresarial
+
+Paleta inspirada em Avanade:
+- fundo claro ou quase branco
+- usar laranja vibrante como cor de destaque
+- usar roxo/magenta escuro ou roxo sofisticado em detalhes secundários
+- neutros elegantes para textos e bordas
+- evitar visual infantil ou muito colorido
+- evitar excesso de efeitos
+
+Estrutura da tela:
+- header com título e subtítulo
+- card principal de gravação de áudio
+- indicador visual de status do microfone
+- botão “Iniciar gravação”
+- botão “Parar gravação”
+- botão “Processar áudio”
+- área de status do processamento
+- card da transcrição
+- card do resumo em tópicos
+- layout desktop first
+- responsivo, mas com foco em notebook/tela de apresentação
+
+Tom dos componentes:
+- botões modernos
+- ícones discretos
+- cards organizados
+- foco em legibilidade
+- interface simples, sem menu lateral
+- uma única tela principal
+ 
