@@ -35,7 +35,7 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
 async def pagina_inicial(request: Request):
     """Serve a página HTML principal da aplicação."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 # =============================================================
@@ -45,22 +45,30 @@ async def pagina_inicial(request: Request):
 @app.post("/processar")
 async def processar_audio(audio: UploadFile = File(...)):
     """
-    Recebe o arquivo de áudio gravado pelo navegador,
+    Recebe o arquivo WAV gravado pelo navegador,
     chama o Azure Speech to Text para transcrever,
     e em seguida chama o Azure OpenAI para gerar o resumo.
     """
     try:
         # Lê o conteúdo binário do arquivo enviado
         conteudo_audio = await audio.read()
+        tamanho_kb = len(conteudo_audio) / 1024
+
+        # Valida que o áudio não está vazio
+        if len(conteudo_audio) < 1000:
+            return {"erro": f"Áudio muito pequeno ({tamanho_kb:.1f} KB). A gravação pode ter falhado."}
+
+        # Usa o content_type real enviado pelo frontend (audio/wav)
+        tipo_audio = audio.content_type or "audio/wav"
 
         # Etapa 1: Transcrever o áudio
-        transcricao = transcrever_audio(conteudo_audio)
+        transcricao = transcrever_audio(conteudo_audio, tipo_audio)
 
         # Se a transcrição vier vazia, avisa o usuário
         if not transcricao:
             return {
                 "transcricao": "(nenhum texto detectado)",
-                "resumo": "Não foi possível transcrever o áudio. Tente falar mais alto e de forma clara."
+                "resumo": "Não foi possível transcrever o áudio. Tente falar mais perto do microfone e de forma clara."
             }
 
         # Etapa 2: Gerar o resumo com Azure OpenAI
@@ -77,12 +85,12 @@ async def processar_audio(audio: UploadFile = File(...)):
 # FUNÇÃO: Transcrição com Azure Speech to Text (REST)
 # =============================================================
 
-def transcrever_audio(conteudo_audio: bytes) -> str:
+def transcrever_audio(conteudo_audio: bytes, tipo_audio: str = "audio/wav") -> str:
     """
-    Envia o áudio para a API REST do Azure Speech to Text
+    Envia o áudio WAV para a API REST do Azure Speech to Text
     e retorna o texto transcrito.
 
-    O navegador grava no formato WebM/Opus, que é aceito pela API da Azure.
+    O frontend converte o áudio para WAV PCM 16kHz (formato garantido pela Azure).
     """
     # URL da API de reconhecimento de fala
     url = (
@@ -93,7 +101,7 @@ def transcrever_audio(conteudo_audio: bytes) -> str:
     # Cabeçalhos: chave de autenticação e formato do áudio
     cabecalhos = {
         "Ocp-Apim-Subscription-Key": SPEECH_KEY,
-        "Content-Type": "audio/webm; codecs=opus",
+        "Content-Type": tipo_audio,
     }
 
     # Parâmetro: idioma esperado na transcrição
@@ -112,6 +120,12 @@ def transcrever_audio(conteudo_audio: bytes) -> str:
 
     # Interpreta o JSON de resposta
     dados = resposta.json()
+
+    # Verifica o status do reconhecimento
+    status = dados.get("RecognitionStatus", "")
+    if status not in ("Success", ""):
+        # Status como "Silence" ou "InitialSilenceTimeout" indicam áudio sem fala
+        return ""
 
     # "DisplayText" contém o texto transcrito (já formatado)
     return dados.get("DisplayText", "")
@@ -148,8 +162,8 @@ def gerar_resumo(transcricao: str) -> str:
             {"role": "system", "content": instrucao_sistema},
             {"role": "user", "content": f"Transcrição:\n{transcricao}"},
         ],
-        max_tokens=300,
-        temperature=0.3,
+        max_completion_tokens=300,
+        temperature=1, 
     )
 
     # Extrai e retorna o texto do resumo gerado

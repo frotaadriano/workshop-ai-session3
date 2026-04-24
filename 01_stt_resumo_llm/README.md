@@ -37,6 +37,9 @@ python -m venv .venv
 # 2. Ativar o ambiente virtual (Windows)
 .venv\Scripts\activate
 
+# 2.1. Atualizar o pip
+python.exe -m pip install --upgrade pip
+
 # 3. Instalar as dependências
 pip install -r requirements.txt
 

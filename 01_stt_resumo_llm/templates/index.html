@@ -5,239 +5,633 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STT + Resumo com LLM</title>
     <style>
-        /* Layout base */
+        :root {
+            --orange:        #FF6B00;
+            --orange-hover:  #E05F00;
+            --orange-light:  #FFF3E9;
+            --orange-border: #FECDAA;
+            --purple:        #6B2D8B;
+            --purple-hover:  #5A2476;
+            --purple-light:  #F3EAF8;
+            --bg:            #F5F7FA;
+            --white:         #FFFFFF;
+            --text:          #1A1A2E;
+            --muted:         #6E7891;
+            --border:        #E2E5EF;
+            --success:       #1B8A4F;
+            --success-light: #E8F7EF;
+            --danger:        #C62828;
+            --info-bg:       #EEF2FF;
+            --info-border:   #6366F1;
+            --info-text:     #3730A3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 780px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: #f0f4f8;
-            color: #333;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 60px;
         }
 
-        h1 {
-            color: #0078d4;
-            border-bottom: 2px solid #0078d4;
-            padding-bottom: 10px;
-            margin-bottom: 6px;
-        }
-
-        .descricao {
-            color: #666;
-            margin-bottom: 28px;
-            font-size: 15px;
-        }
-
-        /* Botões */
-        .botoes {
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--white);
+            border-bottom: 3px solid var(--orange);
+            padding: 18px 40px;
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
-
-        button {
-            padding: 10px 22px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            transition: opacity 0.2s;
+        .header-icon { font-size: 28px; }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
         }
-
-        #btn-iniciar { background-color: #28a745; color: white; }
-        #btn-parar   { background-color: #dc3545; color: white; }
-        #btn-enviar  { background-color: #0078d4; color: white; }
-
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+        .header p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
         }
-
-        /* Área de status */
-        .status {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 24px;
-            background-color: #e3f2fd;
-            border-left: 4px solid #0078d4;
-            font-size: 14px;
-            min-height: 20px;
-        }
-
-        /* Caixas de resultado */
-        .caixa {
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            min-height: 90px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        }
-
-        .caixa h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #0078d4;
-            font-size: 15px;
+        .badge {
+            margin-left: auto;
+            background: var(--orange-light);
+            color: var(--orange);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            border: 1px solid var(--orange-border);
         }
 
-        /* Texto de transcrição e resumo */
-        #texto-transcricao,
-        #texto-resumo {
-            white-space: pre-wrap;
-            color: #444;
-            font-size: 15px;
-            line-height: 1.6;
+        /* ===== MAIN ===== */
+        .main {
+            max-width: 900px;
+            margin: 36px auto;
+            padding: 0 24px;
         }
+
+        /* ===== STEP INDICATOR ===== */
+        .steps {
+            display: flex;
+            align-items: center;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px 32px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            color: var(--muted);
+            flex-shrink: 0;
+            transition: all 0.35s ease;
+        }
+        .step-text strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            transition: color 0.35s;
+        }
+        .step-text span {
+            font-size: 11px;
+            color: var(--muted);
+            opacity: 0.7;
+        }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            margin: 0 6px;
+            max-width: 72px;
+            transition: background 0.35s;
+        }
+
+        .step.active .step-circle {
+            background: var(--orange);
+            border-color: var(--orange);
+            color: white;
+            box-shadow: 0 0 0 4px var(--orange-light);
+        }
+        .step.active .step-text strong { color: var(--orange); }
+
+        .step.done .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step.done .step-text strong { color: var(--success); }
+        .step-line.done { background: var(--success); }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--info-bg);
+            border-left: 4px solid var(--info-border);
+            color: var(--info-text);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+            line-height: 1.5;
+        }
+        .status-bar.recording  { background: #FFF0F0; border-left-color: var(--danger); color: var(--danger); }
+        .status-bar.success    { background: var(--success-light); border-left-color: var(--success); color: var(--success); }
+        .status-bar.error      { background: #FFF3E0; border-left-color: #FF8F00; color: #E65100; }
+        .status-bar.processing { background: var(--purple-light); border-left-color: var(--purple); color: var(--purple); }
+
+        /* ===== CARD DE GRAVAÇÃO ===== */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-header h2 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--purple);
+        }
+
+        .recording-area {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            padding: 28px 32px;
+        }
+
+        .mic-container { text-align: center; flex-shrink: 0; }
+        .mic-visual {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            transition: all 0.3s;
+            margin: 0 auto 10px;
+        }
+        .mic-visual.recording {
+            background: #FFF0F0;
+            border-color: var(--danger);
+            animation: pulse 1.5s ease-out infinite;
+        }
+        .mic-visual.done {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(198, 40, 40, 0.35); }
+            70%  { box-shadow: 0 0 0 18px rgba(198, 40, 40, 0); }
+            100% { box-shadow: 0 0 0 0   rgba(198, 40, 40, 0); }
+        }
+        .mic-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+        .mic-label.recording { color: var(--danger); }
+        .mic-label.done      { color: var(--success); }
+
+        .controls { flex: 1; }
+        .controls-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .controls-sub   { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+        .buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 11px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+        .btn-start   { background: var(--orange); color: white; }
+        .btn-start:not(:disabled):hover { background: var(--orange-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,107,0,0.35); }
+
+        .btn-stop    { background: var(--danger); color: white; }
+        .btn-stop:not(:disabled):hover { background: #B71C1C; }
+
+        .btn-process { background: var(--purple); color: white; }
+        .btn-process:not(:disabled):hover { background: var(--purple-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(107,45,139,0.35); }
+
+        .audio-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: var(--success-light);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 14px;
+            border: 1px solid #A7F3D0;
+        }
+
+        /* ===== GRID DE RESULTADOS ===== */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 640px) { .results-grid { grid-template-columns: 1fr; } }
+
+        .result-card {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        .result-header {
+            padding: 13px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .result-header.stt    { background: var(--info-bg); border-bottom-color: #C7D2FE; }
+        .result-header.resumo { background: var(--orange-light); border-bottom-color: var(--orange-border); }
+        .result-header h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .result-header.stt h3    { color: #4338CA; }
+        .result-header.resumo h3 { color: var(--orange); }
+
+        .result-body {
+            padding: 18px 20px;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--text);
+            white-space: pre-wrap;
+            min-height: 110px;
+        }
+        .placeholder { color: var(--muted); font-style: italic; font-size: 13px; }
+
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <h1>🎙️ STT + Resumo com LLM</h1>
-    <p class="descricao">
-        Grave sua fala, clique em <strong>Processar Áudio</strong> e veja a transcrição e o resumo gerados pela IA Azure.
-    </p>
+<!-- ===== HEADER ===== -->
+<div class="header">
+    <div class="header-icon">🎙️</div>
+    <div>
+        <h1>STT + Resumo com LLM</h1>
+        <p>Azure Speech to Text · Azure OpenAI · Workshop IA</p>
+    </div>
+    <div class="badge">Demo</div>
+</div>
 
-    <!-- Botões de controle da gravação -->
-    <div class="botoes">
-        <button id="btn-iniciar">🎙️ Iniciar Gravação</button>
-        <button id="btn-parar"   disabled>⏹️ Parar Gravação</button>
-        <button id="btn-enviar"  disabled>📤 Processar Áudio</button>
+<div class="main">
+
+    <!-- ===== STEP INDICATOR ===== -->
+    <div class="steps">
+        <div class="step active" id="step-1">
+            <div class="step-circle">1</div>
+            <div class="step-text">
+                <strong>Gravação</strong>
+                <span>Use o microfone</span>
+            </div>
+        </div>
+        <div class="step-line" id="line-12"></div>
+        <div class="step" id="step-2">
+            <div class="step-circle">2</div>
+            <div class="step-text">
+                <strong>Processamento</strong>
+                <span>STT → LLM</span>
+            </div>
+        </div>
+        <div class="step-line" id="line-23"></div>
+        <div class="step" id="step-3">
+            <div class="step-circle">3</div>
+            <div class="step-text">
+                <strong>Resultado</strong>
+                <span>Transcrição + Resumo</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Indicação visual do estado atual -->
-    <div class="status" id="status">Pronto para gravar.</div>
-
-    <!-- Área de exibição da transcrição -->
-    <div class="caixa">
-        <h3>Transcrição</h3>
-        <div id="texto-transcricao">Aguardando gravação...</div>
+    <!-- ===== STATUS BAR ===== -->
+    <div class="status-bar" id="status-bar">
+        💡 Clique em <strong>&nbsp;Iniciar Gravação&nbsp;</strong> para começar. Fale claramente próximo ao microfone.
     </div>
 
-    <!-- Área de exibição do resumo -->
-    <div class="caixa">
-        <h3>Resumo</h3>
-        <div id="texto-resumo">Aguardando gravação...</div>
+    <!-- ===== CARD DE GRAVAÇÃO ===== -->
+    <div class="card">
+        <div class="card-header">
+            <span>🎤</span>
+            <h2>Captura de Áudio</h2>
+        </div>
+        <div class="recording-area">
+
+            <div class="mic-container">
+                <div class="mic-visual" id="mic-visual">🎙️</div>
+                <div class="mic-label" id="mic-label">Aguardando</div>
+            </div>
+
+            <div class="controls">
+                <div class="controls-title" id="controls-title">Pronto para gravar</div>
+                <div class="controls-sub" id="controls-sub">
+                    Clique em <strong>Iniciar Gravação</strong>, fale, depois clique em <strong>Parar</strong>
+                    e em seguida em <strong>Processar Áudio</strong>.
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-start"   id="btn-iniciar">🎙️ Iniciar Gravação</button>
+                    <button class="btn btn-stop"    id="btn-parar"   disabled>⏹️ Parar Gravação</button>
+                    <button class="btn btn-process" id="btn-enviar"  disabled>
+                        <span id="btn-enviar-label">📤 Processar Áudio</span>
+                    </button>
+                </div>
+                <div id="audio-badge-area"></div>
+            </div>
+
+        </div>
     </div>
 
-    <script>
-        // --- Variáveis de controle da gravação ---
-        let gravador = null;        // instância do MediaRecorder
-        let chunksDeAudio = [];     // pedaços de áudio capturados
-        let blobDeAudio = null;     // arquivo final de áudio
+    <!-- ===== RESULTADOS ===== -->
+    <div class="results-grid">
 
-        // --- Referências aos elementos da tela ---
-        const btnIniciar     = document.getElementById("btn-iniciar");
-        const btnParar       = document.getElementById("btn-parar");
-        const btnEnviar      = document.getElementById("btn-enviar");
-        const divStatus      = document.getElementById("status");
-        const divTranscricao = document.getElementById("texto-transcricao");
-        const divResumo      = document.getElementById("texto-resumo");
+        <div class="result-card">
+            <div class="result-header stt">
+                <span>📝</span>
+                <h3>Transcrição (STT)</h3>
+            </div>
+            <div class="result-body" id="texto-transcricao">
+                <span class="placeholder">O texto transcrito aparecerá aqui após o processamento.</span>
+            </div>
+        </div>
 
-        // Atualiza o texto da área de status
-        function atualizarStatus(mensagem) {
-            divStatus.textContent = mensagem;
+        <div class="result-card">
+            <div class="result-header resumo">
+                <span>✨</span>
+                <h3>Resumo por IA</h3>
+            </div>
+            <div class="result-body" id="texto-resumo">
+                <span class="placeholder">O resumo gerado pela IA aparecerá aqui após o processamento.</span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    // CONVERSÃO PARA WAV
+    // O Azure Speech to Text aceita WAV PCM com garantia total.
+    // O MediaRecorder grava em WebM/Opus (padrão do Chrome),
+    // que pode falhar no Azure. Por isso convertemos aqui.
+    // ============================================================
+
+    async function converterParaWav(blob) {
+        const arrayBuffer = await blob.arrayBuffer();
+        const ctx = new AudioContext({ sampleRate: 16000 });
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        const pcm = audioBuffer.getChannelData(0);
+        const wavBuffer = montarWav(pcm, 16000);
+        await ctx.close();
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    }
+
+    function montarWav(pcm, taxa) {
+        const buf  = new ArrayBuffer(44 + pcm.length * 2);
+        const view = new DataView(buf);
+
+        function txt(offset, s) {
+            for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
         }
 
-        // -----------------------------------------------
-        // Botão: Iniciar Gravação
-        // -----------------------------------------------
-        btnIniciar.addEventListener("click", async () => {
-            try {
-                // Solicita acesso ao microfone do usuário
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        txt(0,  'RIFF');
+        view.setUint32(4,  36 + pcm.length * 2, true);
+        txt(8,  'WAVE');
+        txt(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);   // PCM
+        view.setUint16(22, 1, true);   // mono
+        view.setUint32(24, taxa, true);
+        view.setUint32(28, taxa * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        txt(36, 'data');
+        view.setUint32(40, pcm.length * 2, true);
 
-                chunksDeAudio = [];
-                gravador = new MediaRecorder(stream);
+        let off = 44;
+        for (let i = 0; i < pcm.length; i++) {
+            const s = Math.max(-1, Math.min(1, pcm[i]));
+            view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            off += 2;
+        }
+        return buf;
+    }
 
-                // Coleta os pedaços de áudio enquanto grava
-                gravador.ondataavailable = (evento) => {
-                    if (evento.data.size > 0) {
-                        chunksDeAudio.push(evento.data);
-                    }
-                };
+    // ============================================================
+    // ESTADO
+    // ============================================================
 
-                // Quando a gravação é finalizada, monta o arquivo de áudio
-                gravador.onstop = () => {
-                    blobDeAudio = new Blob(chunksDeAudio, { type: "audio/webm" });
-                    atualizarStatus("✅ Gravação finalizada. Clique em 'Processar Áudio'.");
-                    btnEnviar.disabled = false;
-                };
+    let gravador    = null;
+    let chunksAudio = [];
+    let blobWav     = null;
 
-                gravador.start();
-                atualizarStatus("🔴 Gravando... fale agora e clique em 'Parar' quando terminar.");
-                btnIniciar.disabled = true;
-                btnParar.disabled   = false;
-                btnEnviar.disabled  = true;
+    const btnIniciar = document.getElementById('btn-iniciar');
+    const btnParar   = document.getElementById('btn-parar');
+    const btnEnviar  = document.getElementById('btn-enviar');
+    const micVisual  = document.getElementById('mic-visual');
+    const micLabel   = document.getElementById('mic-label');
+    const ctrlTitle  = document.getElementById('controls-title');
+    const ctrlSub    = document.getElementById('controls-sub');
+    const statusBar  = document.getElementById('status-bar');
+    const badgeArea  = document.getElementById('audio-badge-area');
+    const divTransc  = document.getElementById('texto-transcricao');
+    const divResumo  = document.getElementById('texto-resumo');
 
-            } catch (erro) {
-                atualizarStatus("❌ Não foi possível acessar o microfone: " + erro.message);
-            }
-        });
+    function setEtapa(atual) {
+        for (let i = 1; i <= 3; i++) {
+            const el = document.getElementById(`step-${i}`);
+            el.classList.remove('active', 'done');
+            if (i < atual)   el.classList.add('done');
+            if (i === atual) el.classList.add('active');
+        }
+        document.getElementById('line-12').className = 'step-line' + (atual > 1 ? ' done' : '');
+        document.getElementById('line-23').className = 'step-line' + (atual > 2 ? ' done' : '');
+    }
 
-        // -----------------------------------------------
-        // Botão: Parar Gravação
-        // -----------------------------------------------
-        btnParar.addEventListener("click", () => {
-            if (gravador && gravador.state !== "inactive") {
-                gravador.stop();
-            }
-            btnParar.disabled   = true;
-            btnIniciar.disabled = false;
-        });
+    function setStatus(html, tipo) {
+        statusBar.innerHTML = html;
+        statusBar.className = 'status-bar ' + (tipo || '');
+    }
 
-        // -----------------------------------------------
-        // Botão: Enviar e Processar o Áudio
-        // -----------------------------------------------
-        btnEnviar.addEventListener("click", async () => {
-            if (!blobDeAudio) {
-                atualizarStatus("⚠️ Nenhum áudio gravado ainda.");
-                return;
-            }
+    // ============================================================
+    // BOTÃO: Iniciar Gravação
+    // ============================================================
+    btnIniciar.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            chunksAudio = [];
+            blobWav     = null;
+            badgeArea.innerHTML = '';
 
-            // Atualiza a tela para indicar que está processando
-            atualizarStatus("⏳ Enviando áudio para o backend...");
-            btnEnviar.disabled   = true;
-            divTranscricao.textContent = "Processando...";
-            divResumo.textContent      = "Processando...";
+            gravador = new MediaRecorder(stream);
 
-            // Monta o formulário com o arquivo de áudio
-            const formulario = new FormData();
-            formulario.append("audio", blobDeAudio, "gravacao.webm");
+            gravador.ondataavailable = (e) => {
+                if (e.data.size > 0) chunksAudio.push(e.data);
+            };
 
-            try {
-                // Envia o áudio para o backend via POST
-                const resposta = await fetch("/processar", {
-                    method: "POST",
-                    body: formulario,
-                });
+            gravador.onstop = async () => {
+                stream.getTracks().forEach(t => t.stop());
+                const blobOriginal = new Blob(chunksAudio, { type: gravador.mimeType });
 
-                const dados = await resposta.json();
+                setStatus('⏳ Convertendo áudio para WAV...', 'processing');
 
-                // Se o backend retornou um erro
-                if (dados.erro) {
-                    atualizarStatus("❌ Erro no backend: " + dados.erro);
-                    divTranscricao.textContent = "-";
-                    divResumo.textContent      = "-";
-                } else {
-                    // Exibe transcrição e resumo na tela
-                    atualizarStatus("✅ Processamento concluído!");
-                    divTranscricao.textContent = dados.transcricao || "(sem transcrição)";
-                    divResumo.textContent      = dados.resumo      || "(sem resumo)";
+                try {
+                    blobWav = await converterParaWav(blobOriginal);
+                    const kb = (blobWav.size / 1024).toFixed(1);
+                    badgeArea.innerHTML = `<div class="audio-badge">✅ Áudio pronto · ${kb} KB · WAV 16kHz mono</div>`;
+                    setStatus('✅ Gravação concluída. Clique em <strong>&nbsp;Processar Áudio&nbsp;</strong> para transcrever.', 'success');
+                } catch (errConv) {
+                    blobWav = blobOriginal;
+                    const kb = (blobWav.size / 1024).toFixed(1);
+                    badgeArea.innerHTML = `<div class="audio-badge">⚠️ Áudio pronto · ${kb} KB (formato original)</div>`;
+                    setStatus('✅ Gravação concluída. Clique em <strong>&nbsp;Processar Áudio&nbsp;</strong>.', 'success');
                 }
 
-            } catch (erroDeRede) {
-                atualizarStatus("❌ Erro de rede: " + erroDeRede.message);
+                micVisual.className   = 'mic-visual done';
+                micVisual.textContent = '✅';
+                micLabel.textContent  = 'Pronto';
+                micLabel.className    = 'mic-label done';
+                ctrlTitle.textContent = 'Gravação finalizada';
+                ctrlSub.textContent   = 'Clique em "Processar Áudio" para transcrever com o Azure STT.';
+                btnEnviar.disabled    = false;
+                btnIniciar.disabled   = false;
+            };
+
+            gravador.start();
+            setEtapa(1);
+            setStatus('🔴 Gravando... fale claramente. Clique em <strong>&nbsp;Parar Gravação&nbsp;</strong> quando terminar.', 'recording');
+
+            micVisual.className   = 'mic-visual recording';
+            micVisual.textContent = '🎙️';
+            micLabel.textContent  = 'Gravando';
+            micLabel.className    = 'mic-label recording';
+            ctrlTitle.textContent = 'Gravação em andamento';
+            ctrlSub.textContent   = 'Fale próximo ao microfone. Clique em Parar quando terminar.';
+            btnIniciar.disabled   = true;
+            btnParar.disabled     = false;
+            btnEnviar.disabled    = true;
+
+        } catch (erro) {
+            setStatus('❌ Não foi possível acessar o microfone: ' + erro.message, 'error');
+        }
+    });
+
+    // ============================================================
+    // BOTÃO: Parar Gravação
+    // ============================================================
+    btnParar.addEventListener('click', () => {
+        if (gravador && gravador.state !== 'inactive') gravador.stop();
+        btnParar.disabled = true;
+    });
+
+    // ============================================================
+    // BOTÃO: Processar Áudio
+    // ============================================================
+    btnEnviar.addEventListener('click', async () => {
+        if (!blobWav) {
+            setStatus('⚠️ Nenhum áudio disponível. Grave primeiro.', 'error');
+            return;
+        }
+
+        setEtapa(2);
+        setStatus('⏳ Enviando para o Azure Speech to Text...', 'processing');
+        btnEnviar.disabled  = true;
+        btnIniciar.disabled = true;
+        document.getElementById('btn-enviar-label').innerHTML = '<span class="spinner"></span> Processando...';
+
+        divTransc.innerHTML = '<span class="placeholder">Transcrevendo com Azure STT...</span>';
+        divResumo.innerHTML = '<span class="placeholder">Aguardando transcrição...</span>';
+
+        const form = new FormData();
+        form.append('audio', blobWav, 'gravacao.wav');
+
+        try {
+            const resp  = await fetch('/processar', { method: 'POST', body: form });
+            const dados = await resp.json();
+
+            if (dados.erro) {
+                setStatus('❌ Erro: ' + dados.erro, 'error');
+                divTransc.innerHTML = '<span class="placeholder">Erro no processamento.</span>';
+                divResumo.innerHTML = '<span class="placeholder">—</span>';
+                setEtapa(1);
+            } else {
+                setEtapa(3);
+                setStatus('✅ Processamento concluído! Transcrição e resumo gerados com sucesso.', 'success');
+                divTransc.textContent = dados.transcricao || '(sem transcrição)';
+                divResumo.textContent = dados.resumo      || '(sem resumo)';
             }
 
-            btnEnviar.disabled = false;
-        });
-    </script>
+        } catch (erroRede) {
+            setStatus('❌ Erro de rede: ' + erroRede.message, 'error');
+            setEtapa(1);
+        }
+
+        document.getElementById('btn-enviar-label').textContent = '📤 Processar Áudio';
+        btnEnviar.disabled  = false;
+        btnIniciar.disabled = false;
+    });
+</script>
 
 </body>
 </html>
