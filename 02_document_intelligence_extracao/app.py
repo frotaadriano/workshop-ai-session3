@@ -2,9 +2,9 @@
 # Ponto de entrada da aplicação
 # Demonstração didática: Document Intelligence + extração estruturada
 #
-# ETAPA 1: backend agora retorna, além do texto, as coordenadas (polygon)
-# de cada linha extraída, e as dimensões da página — base para o preview
-# com retângulos sobrepostos nas próximas etapas.
+# ETAPA 1: backend retorna texto + coordenadas (polygon) + dimensões da página
+# ETAPA 2: backend extrai também tabelas e marcadores de seleção (checkboxes)
+#          quando o modelo "layout" é usado
 
 import os
 import time
@@ -85,15 +85,23 @@ async def processar_documento(
     # Extrai do JSON: texto consolidado + linhas com boxes + dimensões da página
     texto_extraido, linhas_com_boxes, pagina = extrair_dados_do_resultado(resultado_bruto)
 
+    # Extrai tabelas (apenas quando modelo=layout; read não retorna tabelas)
+    tabelas = extrair_tabelas(resultado_bruto)
+
+    # Extrai marcadores de seleção / checkboxes (apenas quando modelo=layout)
+    selecoes = extrair_selecoes(resultado_bruto)
+
     # Monta o resumo textual estruturado
-    informacoes = montar_informacoes_estruturadas(texto_extraido, linhas_com_boxes)
+    informacoes = montar_informacoes_estruturadas(texto_extraido, linhas_com_boxes, tabelas, selecoes)
 
     # Retorna tudo para o frontend
     return JSONResponse(content={
         "texto_extraido": texto_extraido,
         "informacoes":    informacoes,
         "pagina":         pagina,           # { largura, altura, unidade }
-        "linhas":         linhas_com_boxes, # [ { texto, box: [8 valores] }, ... ]
+        "linhas":         linhas_com_boxes, # [ { texto, box } ]
+        "tabelas":        tabelas,          # [ { linhas, colunas, celulas: [ { texto, linha, coluna, box } ] } ]
+        "selecoes":       selecoes,         # [ { estado, box, confianca } ]
     })
 
 
@@ -217,23 +225,122 @@ def extrair_dados_do_resultado(resultado: dict):
 
 
 # -------------------------------------------------------
+# Função: extrair_tabelas
+#
+# Extrai as tabelas do JSON bruto do Azure (disponível apenas no modelo layout).
+#
+# O Azure retorna em analyzeResult.tables uma lista de tabelas.
+# Cada tabela tem:
+#   - rowCount, columnCount
+#   - cells: lista de células, cada uma com:
+#       - content         : texto da célula
+#       - rowIndex        : linha da célula (0-based)
+#       - columnIndex     : coluna da célula (0-based)
+#       - boundingRegions : [ { pageNumber, polygon } ]
+#
+# Retorna lista de:
+#   { "linhas": N, "colunas": M, "celulas": [ { texto, linha, coluna, box } ] }
+# -------------------------------------------------------
+def extrair_tabelas(resultado: dict) -> list:
+    analyze = resultado.get("analyzeResult", {})
+    tabelas_brutas = analyze.get("tables", [])
+
+    tabelas = []
+
+    for tabela in tabelas_brutas:
+        celulas = []
+
+        for celula in tabela.get("cells", []):
+            texto  = celula.get("content", "")
+            linha  = celula.get("rowIndex", 0)
+            coluna = celula.get("columnIndex", 0)
+
+            # O polygon fica dentro de boundingRegions[0]
+            regioes = celula.get("boundingRegions", [])
+            box = regioes[0].get("polygon", []) if regioes else []
+
+            celulas.append({
+                "texto":  texto,
+                "linha":  linha,
+                "coluna": coluna,
+                "box":    box,  # [x0,y0,x1,y1,x2,y2,x3,y3]
+            })
+
+        tabelas.append({
+            "linhas":  tabela.get("rowCount",    0),
+            "colunas": tabela.get("columnCount", 0),
+            "celulas": celulas,
+        })
+
+    return tabelas
+
+
+# -------------------------------------------------------
+# Função: extrair_selecoes
+#
+# Extrai os marcadores de seleção (checkboxes) do JSON bruto do Azure.
+# Disponível apenas no modelo layout.
+#
+# O Azure retorna em pages[].selectionMarks uma lista de checkboxes.
+# Cada um tem:
+#   - state      : "selected" ou "unselected"
+#   - polygon    : coordenadas do checkbox [x0,y0,...]
+#   - confidence : confiança da detecção (0 a 1)
+#
+# Retorna lista de:
+#   { "estado": "selected"|"unselected", "box": [...], "confianca": 0.99 }
+# -------------------------------------------------------
+def extrair_selecoes(resultado: dict) -> list:
+    paginas = resultado.get("analyzeResult", {}).get("pages", [])
+
+    selecoes = []
+
+    for pagina in paginas:
+        for marca in pagina.get("selectionMarks", []):
+            selecoes.append({
+                "estado":   marca.get("state",      "unselected"),
+                "box":      marca.get("polygon",    []),
+                "confianca": marca.get("confidence", 0),
+            })
+
+    return selecoes
+
+
+# -------------------------------------------------------
 # Função: montar_informacoes_estruturadas
 #
 # Gera um resumo textual simples para exibir na interface:
 # quantidade de linhas, palavras, caracteres e primeiras linhas.
 # -------------------------------------------------------
-def montar_informacoes_estruturadas(texto: str, linhas: list) -> str:
+def montar_informacoes_estruturadas(texto: str, linhas: list, tabelas: list, selecoes: list) -> str:
     if not texto:
         return "Nenhum texto encontrado no documento."
 
     palavras = texto.split()
 
+    # Conta quantos checkboxes estão marcados vs não marcados
+    marcados    = [s for s in selecoes if s["estado"] == "selected"]
+    nao_marcados = [s for s in selecoes if s["estado"] == "unselected"]
+
     resumo = (
         f"Total de linhas     : {len(linhas)}\n"
         f"Total de palavras   : {len(palavras)}\n"
         f"Total de caracteres : {len(texto)}\n"
-        f"\n--- Primeiras 5 linhas ---\n"
-        + "\n".join(l["texto"] for l in linhas[:5])
     )
+
+    # Adiciona info de tabelas se existirem (modelo layout)
+    if tabelas:
+        resumo += f"\nTabelas detectadas  : {len(tabelas)}\n"
+        for i, t in enumerate(tabelas):
+            resumo += f"  Tabela {i+1}: {t['linhas']} linhas x {t['colunas']} colunas ({len(t['celulas'])} células)\n"
+
+    # Adiciona info de checkboxes se existirem (modelo layout)
+    if selecoes:
+        resumo += f"\nCheckboxes detectados: {len(selecoes)}\n"
+        resumo += f"  ☑ Marcados  : {len(marcados)}\n"
+        resumo += f"  ☐ Não marcados: {len(nao_marcados)}\n"
+
+    resumo += f"\n--- Primeiras 5 linhas ---\n"
+    resumo += "\n".join(l["texto"] for l in linhas[:5])
 
     return resumo

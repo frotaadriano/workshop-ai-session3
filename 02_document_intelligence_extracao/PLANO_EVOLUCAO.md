@@ -138,7 +138,7 @@ retornar uma lista estruturada: `[{ "texto": "...", "box": [x1,y1,x2,y2] }, ...]
 
 ---
 
-### ETAPA 2 — Backend: adicionar suporte ao modelo Layout
+### ETAPA 2 — Backend: adicionar suporte ao modelo Layout ✅ CONCLUÍDA
 
 **Objetivo:** Permitir que o usuário escolha entre `read` e `layout` no frontend,
 e o backend usar o modelo correto na chamada ao Azure.
@@ -152,11 +152,18 @@ Para a solicitação de exame laboratorial (que tem caixinhas de seleção), o `
 é muito mais rico. Ele identifica quais checkboxes estão marcados.
 
 **O que será feito:**
-- [ ] Receber parâmetro `modelo` no POST (`read` ou `layout`)
-- [ ] Usar o modelo correto na URL da chamada ao Azure
-- [ ] Extrair também tabelas do resultado do `layout`
-- [ ] Retornar tabelas no JSON: `{ "tabelas": [ { "celulas": [...] } ] }`
-- [ ] Extrair também seleções: `{ "selecoes": [ { "estado": "selected", "box": [...] } ] }`
+- [x] Receber parâmetro `modelo` no POST (`read` ou `layout`)
+- [x] Usar o modelo correto na URL da chamada ao Azure
+- [x] Extrair também tabelas do resultado do `layout`
+- [x] Retornar tabelas no JSON: `{ "tabelas": [ { "celulas": [...] } ] }`
+- [x] Extrair também seleções: `{ "selecoes": [ { "estado": "selected", "box": [...] } ] }`
+
+**Resultado do teste com solicitação de exame (modelo layout):**
+- 64 linhas de texto extraidas
+- 1 tabela detectada: 25 linhas × 4 colunas (98 células)
+- 47 checkboxes detectados (todos `unselected` pois o documento não tinha marcas)
+- Células de tabela: texto + linha + coluna + box (polygon em pixels)
+- Checkboxes: estado + box + confiança
 
 **Entregável:** `app.py` com suporte a `read` e `layout`.
 

@@ -35,7 +35,24 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa 1] — 2026-04-28 — Backend retorna bounding boxes junto com o texto
+## [Etapa 2] — 2026-04-28 — Backend suporta modelo Layout (tabelas e checkboxes)
+
+### Arquivos modificados
+- `app.py` — adicionadas funções `extrair_tabelas()` e `extrair_selecoes()`, resposta da rota atualizada
+- `PLANO_EVOLUCAO.md` — ETAPA 2 marcada como concluída
+
+### O que mudou no app.py
+- Nova função `extrair_tabelas()`: percorre `analyzeResult.tables`, extrai células com texto + posição (linha/coluna) + polygon
+- Nova função `extrair_selecoes()`: percorre `pages[].selectionMarks`, extrai estado (`selected`/`unselected`) + polygon + confiança
+- `montar_informacoes_estruturadas()` atualizada: exibe contagem de tabelas e checkboxes quando presentes
+- JSON de resposta agora inclui: `tabelas` e `selecoes` (vazios quando modelo=read)
+
+### Resultado do teste
+- Modelo layout + solicitação de exame: 1 tabela (25×4), 47 checkboxes detectados
+
+### Motivo
+Permite que o frontend desenhe retangulos diferenciados para texto, celulas de tabela e checkboxes nas próximas etapas.
+
 
 ### Arquivos modificados
 - `app.py` — reescrito com novo formato de resposta, parâmetro `modelo` e funções separadas
