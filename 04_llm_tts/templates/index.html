@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM + TTS — Workshop IA</title>
+  <style>
+    /* ---- Reset e base ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    /* ---- Cabeçalho ---- */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 2rem;
+      color: #FF6B00;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      margin-top: 8px;
+      color: #555;
+      font-size: 0.97rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+
+    /* ---- Indicador de etapas ---- */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 32px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      font-size: 0.82rem;
+      color: #aaa;
+    }
+    .step-circle {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold;
+      font-size: 0.8rem;
+      background: #fff;
+      color: #aaa;
+      transition: all 0.3s;
+    }
+    .step-label { margin: 0 8px; white-space: nowrap; }
+    .step-line { width: 40px; height: 2px; background: #ddd; }
+
+    .step.ativo .step-circle   { border-color: #FF6B00; color: #FF6B00; }
+    .step.concluido .step-circle { background: #FF6B00; border-color: #FF6B00; color: #fff; }
+    .step.ativo .step-label    { color: #FF6B00; font-weight: 600; }
+    .step.concluido .step-label { color: #888; }
+
+    /* ---- Container central ---- */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ---- Formulário ---- */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .badge {
+      font-size: 0.7rem;
+      background: #FF6B00;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px 14px;
+      border: 1px solid #dde1e7;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: vertical;
+      color: #222;
+      background: #fafafa;
+      transition: border-color 0.2s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #FF6B00;
+      background: #fff;
+    }
+
+    button#btn-processar {
+      margin-top: 14px;
+      width: 100%;
+      padding: 13px;
+      background: #FF6B00;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    button#btn-processar:hover  { background: #e05e00; }
+    button#btn-processar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ---- Barra de status ---- */
+    #status-bar {
+      display: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+    #status-bar.processando { background: #fff3e0; color: #e65100; border-left: 4px solid #FF6B00; }
+    #status-bar.sucesso     { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #43a047; }
+    #status-bar.erro        { background: #fce4ec; color: #c62828; border-left: 4px solid #e53935; }
+
+    /* ---- Cards de resultado ---- */
+    #resultado { display: none; }
+
+    .resultado-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 580px) { .resultado-grid { grid-template-columns: 1fr; } }
+
+    .resultado-texto {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+
+    /* ---- Player de áudio ---- */
+    .audio-section {
+      margin-top: 4px;
+    }
+    .audio-section p {
+      font-size: 0.82rem;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    audio {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    /* ---- Rodapé ---- */
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      font-size: 0.78rem;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho -->
+  <header>
+    <h1>🤖 LLM + TTS</h1>
+    <p>
+      Cole ou digite um texto abaixo. A IA vai gerar um resumo e sintetizar
+      a leitura em áudio usando Azure OpenAI e Azure Speech.
+    </p>
+  </header>
+
+  <!-- Indicador de etapas -->
+  <div class="steps" id="steps">
+    <div class="step ativo" id="step-1">
+      <div class="step-circle">1</div>
+      <span class="step-label">Texto</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-2">
+      <div class="step-circle">2</div>
+      <span class="step-label">Resumo (LLM)</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-3">
+      <div class="step-circle">3</div>
+      <span class="step-label">Áudio (TTS)</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Formulário de entrada -->
+    <div class="card">
+      <h2>✏️ Texto de entrada <span class="badge">Passo 1</span></h2>
+      <textarea
+        id="texto-input"
+        placeholder="Cole aqui um comunicado, e-mail, notícia ou qualquer texto para resumir..."
+      ></textarea>
+      <button id="btn-processar" onclick="processar()">▶ Processar</button>
+    </div>
+
+    <!-- Barra de status -->
+    <div id="status-bar"></div>
+
+    <!-- Resultado -->
+    <div id="resultado">
+
+      <!-- Cards lado a lado: texto original e resumo -->
+      <div class="resultado-grid">
+
+        <div class="card">
+          <h2>📄 Texto original</h2>
+          <div id="texto-original" class="resultado-texto"></div>
+        </div>
+
+        <div class="card">
+          <h2>✨ Resumo gerado pela IA <span class="badge">LLM</span></h2>
+          <div id="resumo-gerado" class="resultado-texto"></div>
+        </div>
+
+      </div>
+
+      <!-- Player de áudio -->
+      <div class="card audio-section">
+        <h2>🔊 Ouça o resumo <span class="badge">TTS</span></h2>
+        <p>Áudio gerado pelo Azure Speech com a leitura do resumo acima.</p>
+        <audio id="player-audio" controls></audio>
+      </div>
+
+    </div> <!-- /resultado -->
+
+  </div> <!-- /container -->
+
+  <footer>
+    Workshop IA — Demo LLM + TTS &nbsp;|&nbsp; Azure OpenAI + Azure Speech
+  </footer>
+
+  <script>
+    // -------------------------------------------------------
+    // Atualiza o indicador visual de etapas
+    // -------------------------------------------------------
+    function atualizarEtapa(numero) {
+      for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById('step-' + i);
+        el.classList.remove('ativo', 'concluido');
+        if (i < numero)  el.classList.add('concluido');
+        if (i === numero) el.classList.add('ativo');
+      }
+    }
+
+    // -------------------------------------------------------
+    // Exibe a barra de status com o estilo correto
+    // -------------------------------------------------------
+    function mostrarStatus(mensagem, tipo) {
+      const bar = document.getElementById('status-bar');
+      bar.textContent = mensagem;
+      bar.className = tipo;  // 'processando', 'sucesso' ou 'erro'
+      bar.style.display = 'block';
+    }
+
+    // -------------------------------------------------------
+    // Função principal: chamada ao clicar em "Processar"
+    // -------------------------------------------------------
+    async function processar() {
+      const texto = document.getElementById('texto-input').value.trim();
+
+      // Validação básica no frontend
+      if (!texto) {
+        mostrarStatus('⚠️ Por favor, insira um texto antes de processar.', 'erro');
+        return;
+      }
+
+      // Desabilita o botão durante o processamento
+      const botao = document.getElementById('btn-processar');
+      botao.disabled = true;
+
+      // Esconde resultado anterior
+      document.getElementById('resultado').style.display = 'none';
+
+      // Etapa 2: processando
+      atualizarEtapa(2);
+      mostrarStatus('⏳ Enviando para o Azure OpenAI... gerando resumo...', 'processando');
+
+      try {
+        // Envia o texto para o backend via POST /processar
+        const resposta = await fetch('/processar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ texto: texto })
+        });
+
+        const dados = await resposta.json();
+
+        // Se o backend retornou erro, exibe a mensagem
+        if (!resposta.ok || dados.erro) {
+          mostrarStatus('❌ Erro: ' + (dados.erro || 'Erro desconhecido.'), 'erro');
+          atualizarEtapa(1);
+          return;
+        }
+
+        // Etapa 3: TTS concluído
+        atualizarEtapa(3);
+        mostrarStatus('✅ Resumo gerado e áudio sintetizado com sucesso!', 'sucesso');
+
+        // Preenche os cards de resultado
+        document.getElementById('texto-original').textContent = texto;
+        document.getElementById('resumo-gerado').textContent  = dados.resumo;
+
+        // Configura o player de áudio com o base64 recebido
+        const player = document.getElementById('player-audio');
+        player.src = 'data:audio/mpeg;base64,' + dados.audio_base64;
+        player.load();
+
+        // Exibe a seção de resultado
+        document.getElementById('resultado').style.display = 'block';
+
+        // Rolagem suave até o resultado
+        document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
+
+      } catch (erro) {
+        mostrarStatus('❌ Erro de comunicação com o servidor: ' + erro.message, 'erro');
+        atualizarEtapa(1);
+      } finally {
+        botao.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

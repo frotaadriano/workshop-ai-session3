@@ -1,0 +1,333 @@
+Quero que você atue como um desenvolvedor sênior extremamente didático e pragmático, especializado em Python, FastAPI, HTML simples embutido e integrações com Azure AI Services.
+
+Seu objetivo é me ajudar a criar uma aplicação demo MUITO simples chamada:
+
+"LLM + TTS"
+
+Contexto:
+- Esta app será usada em um workshop interno de introdução à IA.
+- O objetivo é demonstrar, de forma rápida, visual e didática, um fluxo simples de:
+  1. receber um texto digitado pelo usuário
+  2. enviar esse texto para um LLM no Azure OpenAI
+  3. gerar um resumo curto e didático
+  4. enviar esse resumo para Azure Text to Speech
+  5. gerar um áudio com a leitura do resumo
+  6. exibir na tela:
+     - o texto original
+     - o resumo gerado
+     - um player para ouvir o áudio do resumo
+
+IMPORTANTE:
+- O foco é didática e clareza, não produção.
+- O projeto precisa ser extremamente simples.
+- O código deve ser fácil de entender para pessoas com pouca familiaridade com Python e IA.
+- Não usar arquitetura complexa.
+- Não usar frontend separado.
+- O HTML pode ser embutido no próprio backend, ou usar template mínimo.
+- Tudo deve rodar localmente.
+- O código deve estar pronto para eu demonstrar num workshop e também gravar a codificação depois.
+- Quero um app pequeno, com poucas etapas e poucos arquivos.
+- Quero mostrar visualmente a combinação entre geração de texto com LLM e síntese de voz com TTS.
+
+==================================================
+STACK E PADRÕES OBRIGATÓRIOS
+==================================================
+
+Use:
+- Python
+- FastAPI
+- HTML simples
+- CSS mínimo
+- Azure OpenAI
+- Azure Speech Text to Speech
+- requests ou SDK oficial apenas se o uso ficar simples e didático
+
+Evitar:
+- React
+- Vue
+- Angular
+- LangChain
+- LangGraph
+- Semantic Kernel
+- LlamaIndex
+- Docker
+- banco de dados
+- autenticação
+- arquitetura em camadas desnecessária
+- classes complexas
+- excesso de arquivos
+
+==================================================
+ESTRUTURA DO PROJETO
+==================================================
+
+Quero que o projeto tenha algo simples como:
+
+04_llm_tts/
+- app.py
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+Se precisar, pode sugerir também:
+- static/
+- templates/
+
+Mas só se realmente deixar o código mais claro.
+
+==================================================
+OBJETIVO FUNCIONAL DA APP
+==================================================
+
+A app deve ter uma interface simples com:
+
+- um título
+- uma breve descrição
+- uma área de texto para input do usuário
+- um botão para processar
+- uma área para mostrar:
+  - status
+  - texto original
+  - resumo gerado pela IA
+  - player de áudio do resumo
+  - mensagem de erro, se houver
+
+Fluxo esperado:
+1. usuário digita ou cola um texto
+2. backend recebe o texto
+3. backend chama o Azure OpenAI
+4. backend gera um resumo curto
+5. backend chama o Azure Text to Speech usando o resumo
+6. backend gera o áudio
+7. a tela exibe:
+   - texto original
+   - resumo
+   - player de áudio para ouvir o resumo
+
+==================================================
+ESCOPO DIDÁTICO DA DEMO
+==================================================
+
+Quero uma demo simples e visual.
+
+O caso de uso pode ser algo como:
+- resumo de um comunicado interno
+- resumo de um e-mail
+- resumo de um texto institucional
+- resumo de uma notícia curta
+- resumo de um texto corporativo genérico
+
+Se precisar assumir algo, prefira:
+- texto curto ou médio
+- resumo em poucos tópicos ou poucos parágrafos curtos
+- áudio gerado logo após o resumo
+- fluxo síncrono simples
+
+Evitar:
+- streaming em tempo real
+- múltiplas vozes complexas
+- personal voice
+- fila de processamento
+- pipeline avançado
+- interface sofisticada
+
+==================================================
+REQUISITOS TÉCNICOS
+==================================================
+
+A aplicação deve usar variáveis de ambiente como:
+
+- AZURE_OPENAI_API_KEY
+- AZURE_OPENAI_ENDPOINT
+- AZURE_OPENAI_API_VERSION
+- AZURE_OPENAI_CHAT_DEPLOYMENT
+- AZURE_SPEECH_KEY
+- AZURE_SPEECH_REGION
+
+Se necessário, você pode sugerir também:
+- AZURE_SPEECH_VOICE_NAME
+
+Se possível, usar python-dotenv.
+
+Quero:
+- tratamento de erro simples
+- mensagens claras
+- funções pequenas
+- comentários em português
+- nomes de variáveis fáceis de entender
+- código legível acima de tudo
+
+==================================================
+COMPORTAMENTO DO RESUMO
+==================================================
+
+O resumo gerado pelo Azure OpenAI deve ser simples e útil.
+
+Comportamento esperado:
+- resumir em 3 a 5 tópicos curtos ou em um parágrafo curto
+- usar português do Brasil
+- linguagem clara
+- tom corporativo amigável
+- destacar a ideia principal
+- não inventar informações
+- se o texto estiver vazio ou ruim, avisar isso
+
+Sugestão de instrução:
+“Resuma o texto a seguir em português do Brasil, com linguagem clara e objetiva. Gere um resumo curto e fácil de entender. Se o texto estiver incompleto, pouco claro ou vazio, diga isso explicitamente.”
+
+==================================================
+COMPORTAMENTO DO TTS
+==================================================
+
+O Azure Text to Speech deve receber o resumo e gerar um áudio simples para reprodução no navegador.
+
+Quero uma implementação simples e didática.
+
+Preferências:
+- gerar um arquivo de áudio simples
+- devolver esse áudio para tocar na própria interface
+- manter o fluxo fácil de entender
+- se possível, usar uma voz padrão da Azure fácil de configurar
+- deixar claro no código onde o texto do resumo vira áudio
+
+Evitar:
+- streaming de áudio em tempo real
+- websocket
+- múltiplos formatos avançados
+- complexidade desnecessária
+
+==================================================
+REGRAS DE IMPLEMENTAÇÃO
+==================================================
+
+Quero que você siga estas regras durante toda a geração do projeto:
+
+1. Sempre priorize clareza acima de sofisticação.
+2. Sempre explique o que está fazendo.
+3. Crie funções pequenas.
+4. Evite abstrações desnecessárias.
+5. Comente o código em português.
+6. Gere algo fácil de rodar localmente.
+7. Sempre pense em didática de workshop.
+8. Não adicione features que eu não pedi.
+9. Não complique a interface.
+10. Após gerar código, sempre revise mentalmente se faltam imports, dependências, rotas ou tratamento de erro básico.
+11. Sempre considere que depois eu vou versionar cada etapa com Git.
+12. Gere um README curto com instruções de execução.
+13. Gere também um arquivo .env.example com as variáveis necessárias.
+
+==================================================
+REGRAS OBRIGATÓRIAS DE CHANGELOG
+==================================================
+
+Isto é MUITO importante.
+
+Quero que o arquivo `copilot-instructions.md` e o seu comportamento considerem que:
+
+- toda alteração relevante no projeto DEVE gerar atualização no `changelog.md`
+- nenhuma tarefa deve ser considerada concluída sem atualizar o `changelog.md`
+- ao final de cada etapa, você deve registrar no changelog:
+  - data ou marcador da etapa
+  - resumo do que foi alterado
+  - arquivos criados ou modificados
+  - motivo da alteração
+- se você alterar interface, backend, dependências, variáveis de ambiente, rotas ou documentação, isso deve entrar no changelog
+- se você gerar código e esquecer o changelog, considere a resposta incompleta e corrija isso
+- o changelog deve ser simples, legível e incremental
+- sempre que eu pedir uma mudança, você deve também propor a entrada correspondente de changelog
+- trate a atualização do changelog como parte obrigatória da implementação, não como opcional
+
+==================================================
+COPILOT INITIALIZATION / INSTRUÇÕES FIXAS
+==================================================
+
+Considere que este projeto terá um arquivo chamado "copilot-instructions.md" contendo regras permanentes do projeto.
+
+Quero que você também gere esse arquivo com orientações fortes e explícitas como:
+
+- manter o app simples e didático
+- usar Python + FastAPI
+- evitar arquitetura complexa
+- sempre revisar consistência antes de finalizar
+- sempre considerar execução local
+- sempre preservar legibilidade
+- sempre preferir funções pequenas
+- sempre buildar/testar após mudanças, quando aplicável
+- sempre documentar como rodar
+- SEMPRE atualizar o changelog a cada alteração relevante
+- NUNCA considerar uma tarefa concluída sem atualizar o changelog
+- ao alterar qualquer arquivo relevante, registrar isso no changelog
+- ao final de cada etapa, revisar se o changelog foi atualizado
+- tratar changelog como artefato obrigatório do projeto
+
+Quero que o arquivo `copilot-instructions.md` seja escrito de forma firme e operacional, para influenciar o comportamento do Copilot durante todas as próximas alterações.
+
+==================================================
+FORMA DE TRABALHO OBRIGATÓRIA
+==================================================
+
+Quero que você trabalhe em etapas.
+
+ETAPA 1:
+Primeiro, analise o projeto e proponha um plano enxuto em no máximo 3 etapas.
+Cada etapa deve ter:
+- nome
+- objetivo
+- o que será entregue
+
+ETAPA 2:
+Depois disso, gere a estrutura inicial do projeto com:
+- app.py inicial
+- requirements.txt
+- README.md
+- changelog.md
+- .env.example
+- copilot-instructions.md
+
+ETAPA 3:
+Depois implemente a versão funcional mínima da app.
+
+==================================================
+DETALHES IMPORTANTES SOBRE A UI
+==================================================
+
+A interface pode ser bem simples, mas quero algo minimamente agradável:
+- título no topo
+- texto curto explicando o fluxo
+- textarea para o texto de entrada
+- botão de processar
+- indicador visual de status
+- card ou área para texto original
+- card ou área para resumo gerado
+- player de áudio HTML5 para tocar o resultado
+- layout limpo
+- sem excesso de CSS
+
+==================================================
+DETALHES IMPORTANTES SOBRE A ENTREGA
+==================================================
+
+Ao responder:
+1. Comece pelo plano em etapas.
+2. Depois gere os arquivos iniciais.
+3. Depois gere a implementação.
+4. Mostre o conteúdo completo dos arquivos.
+5. Seja organizado.
+6. Não omita trechos importantes.
+7. Se algo puder variar, explique rapidamente o porquê.
+8. Preserve simplicidade.
+
+No final, inclua também:
+- comando para criar venv
+- comando para instalar dependências
+- comando para rodar a app
+
+Se achar útil, também inclua sugestões de commits Git por etapa.
+
+SEMPRE inclua ao final uma seção chamada:
+"Atualização obrigatória de changelog"
+contendo o bloco que deve ser adicionado ao arquivo `changelog.md`.
+
+Agora comece pela ETAPA 1: proponha o plano enxuto em até 3 etapas.
