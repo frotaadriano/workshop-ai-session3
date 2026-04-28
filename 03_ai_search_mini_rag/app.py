@@ -161,8 +161,8 @@ def gerar_resposta_final(prompt: str) -> str:
         messages=[
             {"role": "user", "content": prompt}
         ],
-        temperature=0.3,   # baixo: respostas mais objetivas e consistentes
-        max_tokens=600
+        temperature=1,  
+        max_completion_tokens=1000
     )
 
     return resposta.choices[0].message.content.strip()
