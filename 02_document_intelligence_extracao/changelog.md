@@ -35,7 +35,26 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa 0] — 2026-04-28 — Diagnóstico do recurso Azure Document Intelligence
+## [Etapa 1] — 2026-04-28 — Backend retorna bounding boxes junto com o texto
+
+### Arquivos modificados
+- `app.py` — reescrito com novo formato de resposta, parâmetro `modelo` e funções separadas
+- `PLANO_EVOLUCAO.md` — ETAPA 1 marcada como concluída
+
+### O que mudou no app.py
+- `chamar_document_intelligence()` agora recebe `modelo` e retorna JSON bruto (não mais apenas texto)
+- Nova função `extrair_dados_do_resultado()` retorna texto + linhas com `polygon` + dimensões da página
+- Rota `POST /processar` aceita parâmetro `modelo` (Form field: `read` ou `layout`, padrão `read`)
+- JSON de resposta agora inclui: `texto_extraido`, `informacoes`, `pagina`, `linhas`
+
+### Descoberta importante
+- Para imagens: coordenadas em pixels (`unidade = "pixel"`)
+- Para PDFs: coordenadas em inches (`unidade = "inch"`)
+- Campo `pagina.unidade` já está no JSON para o frontend tratar os dois casos
+
+### Motivo
+Base obrigatória para as próximas etapas desenharem retângulos sobrepostos no preview.
+
 
 ### Arquivos criados
 - `diagnostico.py` — script que testa automaticamente paths, versões e campos da API

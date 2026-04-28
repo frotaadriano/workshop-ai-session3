@@ -99,7 +99,7 @@ Os campos retornados (ex: `polygon` vs `boundingBox`) variam entre as versões.
 
 ---
 
-### ETAPA 1 — Backend: retornar bounding boxes junto com o texto
+### ETAPA 1 — Backend: retornar bounding boxes junto com o texto ✅ CONCLUÍDA
 
 **Objetivo:** Modificar o `app.py` para retornar, além do texto, as coordenadas de
 cada linha extraída — para que o frontend possa desenhar os retângulos.
@@ -109,11 +109,17 @@ Hoje o backend só retorna o texto consolidado. Para o preview funcionar, precis
 retornar uma lista estruturada: `[{ "texto": "...", "box": [x1,y1,x2,y2] }, ...]`
 
 **O que será feito:**
-- [ ] Modificar `extrair_texto_do_resultado()` para retornar lista de objetos com texto + box
-- [ ] Adicionar parâmetro `modelo` na rota POST (`read` ou `layout`)
-- [ ] Retornar também as dimensões da página (`largura_pagina`, `altura_pagina`)
-- [ ] Manter compatibilidade: o texto consolidado continua sendo retornado também
-- [ ] Tratar diferença entre `polygon` (versão nova) e `boundingBox` (versão antiga)
+- [x] Modificar `extrair_texto_do_resultado()` para retornar lista de objetos com texto + box
+- [x] Adicionar parâmetro `modelo` na rota POST (`read` ou `layout`)
+- [x] Retornar também as dimensões da página (`largura_pagina`, `altura_pagina`)
+- [x] Manter compatibilidade: o texto consolidado continua sendo retornado também
+- [x] Tratar diferença entre `polygon` (versão nova) e `boundingBox` (versão antiga)
+
+**Descoberta importante durante testes:**
+- Para **imagens** (PNG/JPG): Azure retorna coordenadas em **pixels** e `unidade = "pixel"`
+- Para **PDFs**: Azure retorna coordenadas em **inches** e `unidade = "inch"`
+- O campo `pagina.unidade` já é retornado no JSON — o frontend vai precisar tratar os dois casos na ETAPA 4
+- Teste com a solicitação de exame real: **58 linhas extraidas**, página 617×762 pixels
 
 **Estrutura do JSON retornado após a etapa:**
 ```json
