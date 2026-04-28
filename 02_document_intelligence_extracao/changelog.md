@@ -35,7 +35,26 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa 3] — 2026-04-28 — Frontend: preview do documento no browser
+## [Etapa 4] — 2026-04-28 — Frontend: retângulos OCR sobre o preview
+
+### Arquivos modificados
+- `templates/index.html` — adicionadas funções `desenharRetangulos()` e `configurarTooltip()`
+- `PLANO_EVOLUCAO.md` — ETAPA 4 marcada como concluída
+
+### O que mudou
+- `desenharRetangulos(linhas, pagina, selecoes)`: chamada após o processamento
+  - Redimensiona `#canvas-overlay` para o tamanho real do container na tela
+  - Calcula `fatorX/fatorY` (coordenada DI → pixel do overlay)
+  - Linhas de texto: retângulo azul `rgba(26,115,232)`
+  - Checkboxes: laranja translúcido (sólido se `selected`)
+- `configurarTooltip()`: ao mover o mouse sobre o overlay, faz hit-test e exibe o texto no tooltip
+- `#ocr-tooltip`: div flutuante com `position:fixed` para o tooltip
+- Legenda de cores exibida abaixo do preview após processar
+- `pointer-events: auto` no overlay para capturar eventos de mouse
+
+### Motivo
+Efeito visual principal do workshop: ver exatamente onde o Azure DI identificou cada texto.
+
 
 ### Arquivos modificados
 - `templates/index.html` — reescrito com layout dois-painéis e lógica de preview

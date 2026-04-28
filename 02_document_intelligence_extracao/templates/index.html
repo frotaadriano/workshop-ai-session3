@@ -163,7 +163,7 @@
     /*
       Canvas de overlay: fica exatamente sobre o canvas/img do documento.
       É aqui que os retângulos OCR serão desenhados (ETAPA 4).
-      pointer-events: none → o mouse passa pelo overlay e atinge o documento.
+      pointer-events: auto → o mouse interage com o overlay para o tooltip.
     */
     #canvas-overlay {
       position: absolute;
@@ -171,8 +171,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
+      pointer-events: auto;
       display: none;
+      cursor: crosshair;
     }
 
     .placeholder-preview {
@@ -180,6 +181,46 @@
       padding: 40px 20px;
       color: #aaa;
       font-size: 0.9rem;
+    }
+
+    /* ── Tooltip OCR ─────────────────────────────────────── */
+    #ocr-tooltip {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.82);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      pointer-events: none;
+      display: none;
+      max-width: 300px;
+      z-index: 9999;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Legenda de cores dos retângulos ─────────────────── */
+    .legenda {
+      display: none;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #555;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .legenda-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legenda-cor {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      border: 2px solid;
+      flex-shrink: 0;
     }
 
     /* ── Painel direito: resultados ──────────────────────── */
@@ -220,6 +261,9 @@
   </style>
 </head>
 <body>
+
+  <!-- Tooltip flutuante para os retângulos OCR -->
+  <div id="ocr-tooltip"></div>
 
   <!-- ── Cabeçalho ─────────────────────────────────────── -->
   <div class="cabecalho">
@@ -288,6 +332,18 @@
       <!-- Aparece antes do upload -->
       <div class="placeholder-preview" id="placeholder-preview">
         Selecione um arquivo para ver o preview aqui.
+      </div>
+
+      <!-- Legenda de cores — aparece após processar -->
+      <div class="legenda" id="legenda">
+        <div class="legenda-item">
+          <div class="legenda-cor" style="border-color:#1a73e8; background:rgba(26,115,232,0.08)"></div>
+          Linhas de texto
+        </div>
+        <div class="legenda-item">
+          <div class="legenda-cor" style="border-color:#e67700; background:rgba(230,119,0,0.10)"></div>
+          Checkboxes
+        </div>
       </div>
     </div>
 
@@ -479,7 +535,8 @@
         mostrarInfo(dados.informacoes);
         mostrarTexto(dados.texto_extraido);
 
-        // TODO (ETAPA 4): chamar desenharRetangulos(dados.linhas, dados.pagina, dados.selecoes)
+        // ETAPA 4: desenha os retângulos OCR sobre o preview
+        desenharRetangulos(dados.linhas, dados.pagina, dados.selecoes);
 
       } catch (err) {
         mostrarStatus("erro", "❌ Erro de conexão com o servidor.");
@@ -516,27 +573,196 @@
       document.getElementById("card-info").style.display  = "none";
     }
 
-    // Limpa o canvas de overlay (retângulos OCR) — preparação para ETAPA 4
+    // Limpa o canvas de overlay (retângulos OCR)
     function limparOverlay() {
       const overlay = document.getElementById("canvas-overlay");
       const ctx = overlay.getContext("2d");
       ctx.clearRect(0, 0, overlay.width, overlay.height);
+      overlay.style.display = "none";
+      document.getElementById("legenda").style.display = "none";
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Função: desenharRetangulos
+    //
+    // Chamada após o processamento com o JSON do backend.
+    // Desenha retângulos coloridos sobre o preview para indicar
+    // onde cada texto foi extraído pelo Azure DI.
+    //
+    // Parâmetros:
+    //   linhas  : [ { texto, box: [x0,y0,x1,y1,x2,y2,x3,y3] } ]
+    //   pagina  : { largura, altura, unidade }  ← dimensões no espaço do DI
+    //   selecoes: [ { estado, box, confianca } ]
+    //
+    // A matemática de escala:
+    //   O DI retorna coordenadas no espaço da imagem original (pixels) ou
+    //   do PDF (inches). O canvas de overlay tem um tamanho diferente na tela.
+    //
+    //   fatorX = largura_do_overlay_na_tela / largura_da_pagina_no_DI
+    //   fatorY = altura_do_overlay_na_tela  / altura_da_pagina_no_DI
+    //
+    //   x_na_tela = box[0] * fatorX
+    //   y_na_tela = box[1] * fatorY
+    // ─────────────────────────────────────────────────────────
+    function desenharRetangulos(linhas, pagina, selecoes) {
+      const overlay    = document.getElementById("canvas-overlay");
+      const container  = document.getElementById("preview-container");
+
+      // O overlay precisa ter o mesmo tamanho em pixels que o container na tela
+      // getBoundingClientRect() retorna as dimensões reais renderizadas
+      const rect = container.getBoundingClientRect();
+      overlay.width  = rect.width;
+      overlay.height = rect.height;
+
+      const ctx = overlay.getContext("2d");
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+      // Fator de escala: converte coordenada do DI → pixel do overlay
+      // pagina.largura/altura = dimensões no espaço original do DI
+      const fatorX = overlay.width  / pagina.largura;
+      const fatorY = overlay.height / pagina.altura;
+
+      // ── Desenha linhas de texto (azul) ──────────────────
+      ctx.strokeStyle = "rgba(26, 115, 232, 0.85)";   // azul Google
+      ctx.fillStyle   = "rgba(26, 115, 232, 0.06)";
+      ctx.lineWidth   = 1.5;
+
+      for (const linha of linhas) {
+        const b = linha.box;
+        if (!b || b.length < 8) continue;
+
+        // box = [x0,y0, x1,y1, x2,y2, x3,y3] → quadrilátero
+        // Usamos xMin/yMin/xMax/yMax para desenhar retângulo simples
+        const xs = [b[0], b[2], b[4], b[6]];
+        const ys = [b[1], b[3], b[5], b[7]];
+        const x  = Math.min(...xs) * fatorX;
+        const y  = Math.min(...ys) * fatorY;
+        const w  = (Math.max(...xs) - Math.min(...xs)) * fatorX;
+        const h  = (Math.max(...ys) - Math.min(...ys)) * fatorY;
+
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x, y, w, h);
+      }
+
+      // ── Desenha checkboxes/seleções (laranja) ───────────
+      if (selecoes && selecoes.length > 0) {
+        for (const sel of selecoes) {
+          const b = sel.box;
+          if (!b || b.length < 8) continue;
+
+          // Marcado = laranja sólido; desmarcado = laranja translúcido
+          const marcado = sel.estado === "selected";
+          ctx.strokeStyle = marcado
+            ? "rgba(230, 100, 0, 1.0)"
+            : "rgba(230, 119, 0, 0.7)";
+          ctx.fillStyle = marcado
+            ? "rgba(230, 100, 0, 0.25)"
+            : "rgba(230, 119, 0, 0.06)";
+          ctx.lineWidth = marcado ? 2.5 : 1.5;
+
+          const xs = [b[0], b[2], b[4], b[6]];
+          const ys = [b[1], b[3], b[5], b[7]];
+          const x  = Math.min(...xs) * fatorX;
+          const y  = Math.min(...ys) * fatorY;
+          const w  = (Math.max(...xs) - Math.min(...xs)) * fatorX;
+          const h  = (Math.max(...ys) - Math.min(...ys)) * fatorY;
+
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeRect(x, y, w, h);
+        }
+      }
+
+      // Exibe o overlay e a legenda
+      overlay.style.display = "block";
+      document.getElementById("legenda").style.display = selecoes && selecoes.length > 0
+        ? "flex"
+        : "flex";
+
+      // ── Tooltip: mostra o texto ao passar o mouse ────────
+      configurarTooltip(overlay, linhas, selecoes, fatorX, fatorY);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Função: configurarTooltip
+    //
+    // Ao mover o mouse sobre o overlay, verifica se o cursor
+    // está dentro de algum retângulo OCR e exibe o texto.
+    //
+    // Recalcula todas as bounding boxes em pixels do overlay
+    // e faz hit-test (point-in-rect) a cada movimento do mouse.
+    // ─────────────────────────────────────────────────────────
+    function configurarTooltip(overlay, linhas, selecoes, fatorX, fatorY) {
+      const tooltip = document.getElementById("ocr-tooltip");
+
+      // Monta lista de áreas clicáveis: { x, y, w, h, texto }
+      const areas = [];
+
+      for (const linha of linhas) {
+        const b = linha.box;
+        if (!b || b.length < 8) continue;
+        const xs = [b[0], b[2], b[4], b[6]];
+        const ys = [b[1], b[3], b[5], b[7]];
+        areas.push({
+          x: Math.min(...xs) * fatorX,
+          y: Math.min(...ys) * fatorY,
+          w: (Math.max(...xs) - Math.min(...xs)) * fatorX,
+          h: (Math.max(...ys) - Math.min(...ys)) * fatorY,
+          texto: linha.texto,
+        });
+      }
+
+      if (selecoes) {
+        for (const sel of selecoes) {
+          const b = sel.box;
+          if (!b || b.length < 8) continue;
+          const xs = [b[0], b[2], b[4], b[6]];
+          const ys = [b[1], b[3], b[5], b[7]];
+          areas.push({
+            x: Math.min(...xs) * fatorX,
+            y: Math.min(...ys) * fatorY,
+            w: (Math.max(...xs) - Math.min(...xs)) * fatorX,
+            h: (Math.max(...ys) - Math.min(...ys)) * fatorY,
+            texto: sel.estado === "selected" ? "☑ Marcado" : "☐ Não marcado",
+          });
+        }
+      }
+
+      // Remove listener antigo para evitar duplicação
+      overlay.onmousemove = null;
+      overlay.onmouseleave = null;
+
+      overlay.onmousemove = function (e) {
+        // Posição do mouse relativa ao overlay
+        const overlayRect = overlay.getBoundingClientRect();
+        const mx = e.clientX - overlayRect.left;
+        const my = e.clientY - overlayRect.top;
+
+        // Escala entre tamanho CSS do overlay e seu tamanho interno em pixels
+        const escalaX = overlay.width  / overlayRect.width;
+        const escalaY = overlay.height / overlayRect.height;
+        const px = mx * escalaX;
+        const py = my * escalaY;
+
+        // Procura a primeira área que contém o ponto
+        const encontrado = areas.find(
+          a => px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h
+        );
+
+        if (encontrado) {
+          tooltip.textContent = encontrado.texto;
+          tooltip.style.left    = (e.clientX + 12) + "px";
+          tooltip.style.top     = (e.clientY + 12) + "px";
+          tooltip.style.display = "block";
+        } else {
+          tooltip.style.display = "none";
+        }
+      };
+
+      overlay.onmouseleave = function () {
+        tooltip.style.display = "none";
+      };
     }
   </script>
 
-</body>
-</html>
-
-    function mostrarInfo(info) {
-      const card = document.getElementById("card-info");
-      document.getElementById("info-estruturada").textContent = info || "";
-      card.style.display = "block";
-    }
-
-    function esconderCards() {
-      document.getElementById("card-texto").style.display = "none";
-      document.getElementById("card-info").style.display = "none";
-    }
-  </script>
 </body>
 </html>

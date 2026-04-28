@@ -202,7 +202,7 @@ o processamento — como base para sobrepor os retângulos do OCR.
 
 ---
 
-### ETAPA 4 — Frontend: desenhar retângulos sobrepostos (bounding boxes)
+### ETAPA 4 — Frontend: desenhar retângulos sobrepostos (bounding boxes) ✅ CONCLUÍDA
 
 **Objetivo:** Após o processamento, desenhar retângulos coloridos sobre o preview,
 nas posições exatas onde o Azure DI encontrou cada linha de texto.
@@ -217,11 +217,11 @@ Exemplo:
 ```
 
 **O que será feito:**
-- [ ] Após receber o JSON com `linhas` + `pagina`, calcular o fator de escala
-- [ ] Para cada linha, desenhar um `strokeRect` no canvas com `2d context`
-- [ ] Adicionar tooltip: ao passar o mouse sobre o retângulo, mostrar o texto
-- [ ] Usar cores diferentes: azul para linhas de texto, verde para tabelas, laranja para seleções
-- [ ] Garantir que o canvas de overlay fique exatamente sobre o preview (CSS position absolute)
+- [x] Após receber o JSON com `linhas` + `pagina`, calcular o fator de escala
+- [x] Para cada linha, desenhar um `strokeRect` no canvas com `2d context`
+- [x] Adicionar tooltip: ao passar o mouse sobre o retângulo, mostrar o texto
+- [x] Usar cores diferentes: azul para linhas de texto, laranja para seleções
+- [x] Garantir que o canvas de overlay fique exatamente sobre o preview (CSS position absolute)
 
 **Entregável:** `index.html` com retângulos sobrepostos funcionando.
 
