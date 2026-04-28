@@ -53,6 +53,9 @@ python -m venv venv
 # Ativar no Windows
 venv\Scripts\activate
 
+# Atualizar o pip
+python.exe -m pip install --upgrade pip
+
 # Ativar no Linux/Mac
 source venv/bin/activate
 ```
@@ -73,10 +76,10 @@ cp .env.example .env
 
 Edite o arquivo `.env` com suas credenciais do Azure.
 
-### 4. Rodar a aplicação
+### 4. Rodar a aplicação porta 8003
 
 ```bash
-uvicorn app:app --reload
+uvicorn app:app --reload --port 8003 
 ```
 
 Acesse no navegador: [http://localhost:8000](http://localhost:8000)

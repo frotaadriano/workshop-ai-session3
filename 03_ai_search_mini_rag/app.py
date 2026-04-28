@@ -105,7 +105,8 @@ def buscar_trechos_relevantes(pergunta: str, quantidade: int = 3) -> list[dict]:
     for item in resultados:
         trechos.append({
             "titulo": item.get(CAMPO_TITULO, "Sem título"),
-            "conteudo": item.get(CAMPO_CONTEUDO, "")
+            "conteudo": item.get(CAMPO_CONTEUDO, ""),
+            "score": round(item.get("@search.score", 0), 2)  # score de relevância retornado pelo AI Search
         })
 
     return trechos

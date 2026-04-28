@@ -1,5 +1,26 @@
 # Changelog — AI Search + Mini RAG
 
+## [2.0.0] — 2026-04-28
+
+### Alterado
+- `templates/index.html`: reescrita completa da interface com Tailwind CSS CDN + Material Symbols Outlined
+  - Header fixo com logo "RAG Insight", nav decorativa e ícones de ação
+  - Hero centralizado: título "Exploração Cognitiva", campo de busca com ícone lupa e botão "Consultar →" embutido
+  - Step Indicator animado com 5 passos (Pergunta → AI Search → Contexto → LLM → Resposta Final) que acendem em sequência via JS puro
+  - Grid 2 colunas: card de trechos (esq.) + card de resposta final (dir.)
+  - Badge de score de relevância por trecho (ex: "Score: 0.94")
+  - Border-left colorida por posição do trecho (laranja / roxo / cinza)
+  - Botão "Copiar" (navigator.clipboard) e botão "Nova Consulta" no card de resposta
+  - Banner hero inferior com gradiente roxo→laranja
+  - Footer com logo e links decorativos
+  - Empty state: grid de resultados oculto até a primeira consulta
+- `app.py`: adicionado campo `score` no dicionário de cada trecho em `buscar_trechos_relevantes()`, lendo `@search.score` da resposta do Azure AI Search
+
+### Motivo
+Redesign visual para workshop: experiência mais próxima de um produto real, step indicator animado para didática ao vivo, score de relevância visível por trecho.
+
+---
+
 ## [1.2.0] — 2026-04-28
 
 ### Adicionado
