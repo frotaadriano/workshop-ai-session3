@@ -68,7 +68,7 @@ Para desenhar retângulos na tela, precisamos:
 
 ---
 
-### ETAPA 0 — Diagnóstico: validar o que o recurso Azure suporta
+### ETAPA 0 — Diagnóstico: validar o que o recurso Azure suporta ✅ CONCLUÍDA
 
 **Objetivo:** Antes de codar, descobrir exatamente qual versão da API e quais modelos
 estão disponíveis no recurso Azure que temos.
@@ -79,10 +79,21 @@ Recursos novos usam `/documentintelligence/` com API `2024-02-29-preview` ou `20
 Os campos retornados (ex: `polygon` vs `boundingBox`) variam entre as versões.
 
 **O que será feito:**
-- [ ] Criar script `diagnostico.py` que testa o endpoint e descobre a versão correta
-- [ ] Verificar se `polygon` ou `boundingBox` está nos dados retornados
-- [ ] Confirmar que o modelo `prebuilt-layout` está disponível no recurso
-- [ ] Anotar os campos exatos que vêm na resposta (para usar nas etapas seguintes)
+- [x] Criar script `diagnostico.py` que testa o endpoint e descobre a versão correta
+- [x] Verificar se `polygon` ou `boundingBox` está nos dados retornados
+- [x] Confirmar que o modelo `prebuilt-layout` está disponível no recurso
+- [x] Anotar os campos exatos que vêm na resposta (para usar nas etapas seguintes)
+
+**Resultado do diagnóstico:**
+| Item | Valor identificado |
+|---|---|
+| Path correto | `/documentintelligence/documentModels` |
+| API version | `2024-11-30` |
+| Campo de coordenadas | `polygon` (array de 8 valores em inches) |
+| `prebuilt-read` disponível | ✅ sim |
+| `prebuilt-layout` disponível | ✅ sim |
+| Dimensões da página | `width`, `height`, `unit` em `pages[0]` |
+| boundingBox | ❌ ausente — usar apenas `polygon` |
 
 **Entregável:** saída no terminal confirmando versão, path e campos disponíveis.
 

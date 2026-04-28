@@ -35,7 +35,25 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa C — Fix] — 2026-04-24 — Correção do path da API e mensagem de erro
+## [Etapa 0] — 2026-04-28 — Diagnóstico do recurso Azure Document Intelligence
+
+### Arquivos criados
+- `diagnostico.py` — script que testa automaticamente paths, versões e campos da API
+
+### Arquivos modificados
+- `app.py` — atualizado `API_VERSION` para `2024-11-30` e path para `/documentintelligence/`
+- `PLANO_EVOLUCAO.md` — ETAPA 0 marcada como concluída com resultados do diagnóstico
+
+### Resultado do diagnóstico
+- Path correto: `/documentintelligence/documentModels`
+- API version: `2024-11-30`
+- Campo de coordenadas: `polygon` (8 valores em inches)
+- Modelos disponíveis: `prebuilt-read` e `prebuilt-layout`
+- `boundingBox` ausente — usar apenas `polygon`
+
+### Motivo
+Identificar a configuração exata do recurso Azure antes de implementar bounding boxes.
+
 
 ### Arquivos modificados
 - `app.py` — corrigida URL da API: `/documentintelligence/` → `/formrecognizer/`; API version `2023-07-31` → `2022-08-31`

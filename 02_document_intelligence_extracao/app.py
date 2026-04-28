@@ -18,7 +18,8 @@ ENDPOINT = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT", "").rstrip("/")
 KEY = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_KEY", "")
 
 # Versão da API do Document Intelligence
-API_VERSION = "2022-08-31"
+# Identificado pelo diagnostico.py: recurso suporta API 2024-11-30
+API_VERSION = "2024-11-30"
 
 # Inicializa o app FastAPI
 app = FastAPI(title="Document Intelligence Demo")
@@ -76,8 +77,8 @@ async def processar_documento(arquivo: UploadFile = File(...)):
 def chamar_document_intelligence(conteudo: bytes, content_type: str) -> str:
 
     # URL da API para o modelo "prebuilt-read" (leitura geral de texto)
-    # Usa o path /formrecognizer/ compatível com recursos criados antes de 2024
-    url_analise = f"{ENDPOINT}/formrecognizer/documentModels/prebuilt-read:analyze?api-version={API_VERSION}"
+    # Path identificado pelo diagnostico.py: /documentintelligence/ + api 2024-11-30
+    url_analise = f"{ENDPOINT}/documentintelligence/documentModels/prebuilt-read:analyze?api-version={API_VERSION}"
 
     cabecalhos = {
         "Ocp-Apim-Subscription-Key": KEY,
