@@ -1,5 +1,20 @@
 # Changelog — LLM + TTS
 
+## [1.8.1] — 2026-04-28
+
+### Documentação
+- Adicionada seção **"Como usar a interface"** no `README.md` com:
+  - Diagrama ASCII da nova UI com seletor de voz
+  - Passo a passo de uso (escolher qualidade → escolher voz → digitar texto → processar)
+  - Tabela com as 16 vozes pt-BR disponíveis na app
+  - Dica para adicionar novas vozes editando o `app.py`
+- Reorganizada a seção de tipos de voz: agora explica que o **toggle da UI tem prioridade** e o `.env` apenas define o padrão inicial
+
+### Arquivos modificados
+- `README.md` — nova seção de uso da interface
+
+---
+
 ## [1.8.0] — 2026-04-28
 
 ### Adicionado

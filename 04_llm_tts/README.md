@@ -69,11 +69,51 @@ Acesse no navegador: [http://localhost:8004](http://localhost:8004)
 
 ---
 
+## 🖥️ Como usar a interface
+
+A tela tem **um seletor de voz** que permite experimentar diferentes opções sem reiniciar o servidor:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ✏️  Texto de entrada                       [Passo 1] │
+│                                                      │
+│  Qualidade: [ Standard ] [ HD ✨ ]   Voz: [ ▼ ]      │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Cole aqui o texto a ser resumido...            │  │
+│  └────────────────────────────────────────────────┘  │
+│  [          ▶ Processar          ]                   │
+└──────────────────────────────────────────────────────┘
+```
+
+### Passo a passo
+
+1. **Escolha a qualidade** clicando em `Standard` ou `HD ✨`
+2. **Escolha a voz** no dropdown (a lista muda conforme o tipo selecionado)
+3. **Cole ou digite o texto** que você quer resumir
+4. Clique em **Processar**
+
+A app vai:
+- Gerar o resumo via Azure OpenAI
+- Sintetizar o áudio com a voz que você escolheu
+- Mostrar texto original, resumo e player de áudio
+- Indicar embaixo do player qual voz foi usada (ex: `Tipo: HD | Voz: pt-BR-Thalita:DragonHDLatestNeural`)
+
+### Vozes pt-BR disponíveis na app
+
+| Categoria | Vozes |
+|---|---|
+| **Standard** | Francisca, Antonio, Brenda, Donato, Elza, Fabio, Giovanna, Humberto, Julio, Leila, Leticia, Manuela, Nicolau, Valerio, Yara |
+| **HD** | Thalita HD |
+
+> 💡 Para adicionar mais vozes, edite as listas `VOZES_STANDARD` e `VOZES_HD` no [app.py](app.py).
+
+---
+
 ## 🎙️ Tipos de voz no Azure TTS — guia rápido
 
-O Azure Speech oferece **dois tipos principais** de vozes para Text-to-Speech. Esta app suporta ambos via a flag `AZURE_SPEECH_USE_HD`.
+O Azure Speech oferece **dois tipos principais** de vozes para Text-to-Speech. Esta app suporta ambos via toggle na UI ou pelo `.env` (`AZURE_SPEECH_USE_HD`).
 
-### 1. Voz **Standard (Neural)** — `AZURE_SPEECH_USE_HD=false`
+### 1. Voz **Standard (Neural)**
 
 - Exemplos: `pt-BR-FranciscaNeural`, `pt-BR-AntonioNeural`, `pt-BR-BrendaNeural`
 - Formato do nome: `<idioma>-<voz>Neural`
@@ -84,7 +124,7 @@ O Azure Speech oferece **dois tipos principais** de vozes para Text-to-Speech. E
 - ✅ **Mais de 500 vozes** em centenas de idiomas
 - 🎯 **Ideal para:** demos, produção em larga escala, apps que precisam de baixa latência
 
-### 2. Voz **HD (Dragon HD)** — `AZURE_SPEECH_USE_HD=true`
+### 2. Voz **HD (Dragon HD)**
 
 - Exemplos: `pt-BR-Thalita:DragonHDLatestNeural`, `en-US-Ava:DragonHDLatestNeural`
 - Formato do nome: `<idioma>-<voz>:DragonHDLatestNeural` (com **dois pontos `:`**)
@@ -104,38 +144,34 @@ O Azure Speech oferece **dois tipos principais** de vozes para Text-to-Speech. E
 | **Qualidade** | Boa, robótica em alguns trechos | Excelente, quase humana |
 | **Latência** | ~500ms | ~300ms (mas +tempo de modelo) |
 | **Custo** | $ | $$$ |
-| **Vozes pt-BR** | ~13 vozes | 1 voz (Thalita) |
+| **Vozes pt-BR** | ~15 vozes | 1 voz (Thalita) |
 | **SSML** | Completo | Subset |
 | **Regiões** | Quase todas | Algumas (ex: swedencentral) |
 
-### Como alternar na app
+### Padrão inicial via `.env`
 
-Basta editar o `.env`:
+A UI tem prioridade, mas você pode definir o padrão inicial pelo `.env`:
 
 ```env
-# Para usar a voz Standard (rápida e barata):
-AZURE_SPEECH_USE_HD=false
-
-# Para usar a voz HD (premium, natural):
-AZURE_SPEECH_USE_HD=true
+AZURE_SPEECH_USE_HD=false                                       # padrão Standard
+AZURE_SPEECH_VOICE_HD=pt-BR-Thalita:DragonHDLatestNeural        # voz HD padrão
+AZURE_SPEECH_VOICE_STANDARD=pt-BR-FranciscaNeural               # voz Standard padrão
 ```
 
-Reinicie o servidor (`uvicorn app:app --reload --port 8004`) e o log vai mostrar qual voz está ativa:
+Ao processar, o terminal mostra qual voz foi de fato usada:
 
 ```
 [TTS] Tipo: Standard (Neural) | Voz: pt-BR-FranciscaNeural | Região: swedencentral
 ```
 
-### Por que precisa de duas variáveis separadas?
+### ⚠️ Atenção ao formato do nome
 
-Os formatos dos nomes são diferentes:
+O nome técnico no SSML/REST API segue o padrão oficial Microsoft `<voicename>:<basemodel>:<version>` — **não** é o rótulo exibido no Speech Playground:
 
-| Tipo | Exemplo |
+| Rótulo no Playground | Nome técnico (SSML) |
 |---|---|
-| Standard | `pt-BR-FranciscaNeural` |
-| HD | `pt-BR-Thalita:DragonHDLatestNeural` |
-
-O nome no SSML segue o padrão **oficial Microsoft** `<voicename>:<basemodel>:<version>`. O nome exibido na UI do Speech Playground (ex: "Thalita Dragon HD Latest") **não** é o nome técnico — é só um rótulo amigável.
+| Francisca Neural | `pt-BR-FranciscaNeural` |
+| Thalita Dragon HD Latest | `pt-BR-Thalita:DragonHDLatestNeural` |
 
 📚 Documentação oficial: [HD voices Azure Speech](https://learn.microsoft.com/azure/ai-services/speech-service/high-definition-voices)
 
