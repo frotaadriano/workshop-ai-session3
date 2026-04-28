@@ -169,7 +169,7 @@ Para a solicitação de exame laboratorial (que tem caixinhas de seleção), o `
 
 ---
 
-### ETAPA 3 — Frontend: preview do documento no browser
+### ETAPA 3 — Frontend: preview do documento no browser ✅ CONCLUÍDA
 
 **Objetivo:** Exibir o documento enviado pelo usuário na tela, antes ou durante
 o processamento — como base para sobrepor os retângulos do OCR.
@@ -192,11 +192,11 @@ o processamento — como base para sobrepor os retângulos do OCR.
 ```
 
 **O que será feito:**
-- [ ] Detectar tipo do arquivo (imagem ou PDF) pelo `file.type`
-- [ ] Para imagens: exibir com `<img>` em um canvas container
-- [ ] Para PDF: renderizar primeira página com PDF.js em `<canvas>`
-- [ ] Mostrar preview logo após o upload, antes mesmo de processar
-- [ ] Guardar as dimensões reais do canvas renderizado (para escalar o OCR)
+- [x] Detectar tipo do arquivo (imagem ou PDF) pelo `file.type`
+- [x] Para imagens: exibir com `<img>` em um canvas container
+- [x] Para PDF: renderizar primeira página com PDF.js em `<canvas>`
+- [x] Mostrar preview logo após o upload, antes mesmo de processar
+- [x] Guardar as dimensões reais do canvas renderizado (para escalar o OCR)
 
 **Entregável:** `index.html` com preview funcional de imagem e PDF.
 

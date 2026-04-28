@@ -35,7 +35,25 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa 2] — 2026-04-28 — Backend suporta modelo Layout (tabelas e checkboxes)
+## [Etapa 3] — 2026-04-28 — Frontend: preview do documento no browser
+
+### Arquivos modificados
+- `templates/index.html` — reescrito com layout dois-painéis e lógica de preview
+- `PLANO_EVOLUCAO.md` — ETAPA 3 marcada como concluída
+
+### O que mudou
+- Layout dois-painéis: preview à esquerda (480px), resultados à direita
+- Seletor de modelo adicionado ao formulário (`read` ou `layout`)
+- `renderizarPreviewPDF()`: usa PDF.js (CDN) para renderizar PDF no `<canvas>`
+- `renderizarPreviewImagem()`: usa FileReader + `<img>` para PNG/JPG
+- Preview exibido imediatamente após o upload, antes do processamento
+- `dimensoesCanvas` armazenado globalmente para uso na ETAPA 4
+- `#canvas-overlay` adicionado (position:absolute sobre o preview) — pronto para ETAPA 4
+- FormData agora envia também o campo `modelo`
+
+### Motivo
+Base visual para sobrepor retângulos OCR na ETAPA 4. Sem o preview, não há onde desenhar.
+
 
 ### Arquivos modificados
 - `app.py` — adicionadas funções `extrair_tabelas()` e `extrair_selecoes()`, resposta da rota atualizada
