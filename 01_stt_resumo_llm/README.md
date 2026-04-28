@@ -32,10 +32,10 @@ Aplicação demo de workshop para demonstrar, de forma simples e visual, o fluxo
 
 ```bash
 # 1. Criar o ambiente virtual
-python -m venv .venv
+python -m venv venv
 
 # 2. Ativar o ambiente virtual (Windows)
-.venv\Scripts\activate
+venv\Scripts\activate
 
 # 2.1. Atualizar o pip
 python.exe -m pip install --upgrade pip
