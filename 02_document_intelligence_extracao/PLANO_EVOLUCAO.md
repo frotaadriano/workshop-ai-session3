@@ -227,18 +227,18 @@ Exemplo:
 
 ---
 
-### ETAPA 5 — Frontend: seletor de modelo e interatividade
+### ETAPA 5 — Frontend: seletor de modelo e interatividade ✅ CONCLUÍDA
 
 **Objetivo:** Adicionar um seletor visual para o usuário escolher o modelo DI
 e tornar a experiência mais interativa e didática para o workshop.
 
 **O que será feito:**
-- [ ] Adicionar `<select>` com opções: `Read` e `Layout`
-- [ ] Enviar o modelo escolhido no FormData do POST
-- [ ] Se escolher `Layout`: mostrar também as tabelas extraídas em uma seção separada
-- [ ] Se escolher `Layout`: mostrar checkboxes identificados (marcados / não marcados)
-- [ ] Adicionar legenda visual das cores dos retângulos
-- [ ] Tornar os retângulos clicáveis: ao clicar, destaca o texto correspondente na lista
+- [x] Adicionar `<select>` com opções: `Read` e `Layout` (já feito na ETAPA 3)
+- [x] Enviar o modelo escolhido no FormData do POST (já feito na ETAPA 3)
+- [x] Se escolher `Layout`: mostrar também as tabelas extraídas em uma seção separada
+- [x] Se escolher `Layout`: mostrar checkboxes identificados (marcados / não marcados)
+- [x] Adicionar legenda visual das cores dos retângulos (já feito na ETAPA 4)
+- [x] Tornar os retângulos clicáveis: ao clicar num checkbox no preview, destaca o item na lista
 
 **Entregável:** Interface completa, interativa e didática.
 

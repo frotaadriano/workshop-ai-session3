@@ -35,7 +35,28 @@ Scaffolding inicial do projeto para o workshop. Base pronta para versionamento e
 ### Motivo
 Correção do erro 404 em `POST /processar` e implementação completa da integração com o Azure.
 
-## [Etapa 4] — 2026-04-28 — Frontend: retângulos OCR sobre o preview
+## [Etapa 5] — 2026-04-28 — Frontend: cards de tabela, checkboxes e interatividade
+
+### Arquivos modificados
+- `templates/index.html` — novos cards, funções JS e interação clique
+- `PLANO_EVOLUCAO.md` — ETAPA 5 marcada como concluída
+
+### O que mudou
+- Novo card `#card-selecoes`: lista todos os checkboxes com estado (☑/☐) e % de confiança
+- Novo card `#card-tabelas`: renderiza a tabela extraída como `<table>` HTML legível
+  - Células do DI com `:unselected:` e `:selected:` são trocadas por ☐/☑
+  - Primeira linha vira cabeçalho `<th>`; demais viram `<td>`
+- `mostrarSelecoes()`: renderiza lista de checkboxes com `data-idx` para destaque
+- `mostrarTabela()`: reconstrói a grade 2D a partir da lista plana de células
+- `esconderCards()` atualizada: limpa também `card-selecoes` e `card-tabelas`
+- Clique no overlay: destaca visualmente o item correspondente na lista de checkboxes
+  e rola a lista até ele (`.linha-destacada` com timeout de 2s)
+- `idx` adicionado nas áreas de seleção do `configurarTooltip()` para o hit-test de clique
+
+### Motivo
+Tornar a demo mais rica e didática: o workshop pode mostrar a relação visual entre
+ o retângulo no documento e o item correspondente na lista extraída.
+
 
 ### Arquivos modificados
 - `templates/index.html` — adicionadas funções `desenharRetangulos()` e `configurarTooltip()`

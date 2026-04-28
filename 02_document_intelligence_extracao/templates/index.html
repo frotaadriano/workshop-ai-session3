@@ -258,6 +258,60 @@
       overflow-y: auto;
       margin: 0;
     }
+
+    /* ── Tabela de exames (ETAPA 5) ─────────────────── */
+    .tabela-extraida {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 6px;
+    }
+
+    .tabela-extraida th {
+      background: #e8f0fe;
+      color: #0066cc;
+      padding: 5px 8px;
+      text-align: left;
+      border: 1px solid #c5d5f5;
+      font-weight: bold;
+    }
+
+    .tabela-extraida td {
+      padding: 4px 8px;
+      border: 1px solid #e0e0e0;
+      vertical-align: top;
+    }
+
+    .tabela-extraida tr:nth-child(even) td {
+      background: #f8f9fa;
+    }
+
+    /* ── Lista de checkboxes (ETAPA 5) ──────────────── */
+    .lista-checkboxes {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 0.84rem;
+    }
+
+    .lista-checkboxes li {
+      padding: 3px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .lista-checkboxes li:last-child { border-bottom: none; }
+
+    /* item destacado ao clicar no retângulo do preview */
+    .linha-destacada {
+      background: #fff3cd !important;
+      border-radius: 3px;
+      transition: background 0.4s;
+    }
   </style>
 </head>
 <body>
@@ -354,6 +408,30 @@
       <div class="card" id="card-info">
         <h2>📊 Informações estruturadas</h2>
         <pre id="info-estruturada"></pre>
+      </div>
+
+      <!-- Card: Checkboxes detectados (só aparece com modelo layout) -->
+      <div class="card" id="card-selecoes">
+        <h2>☑️ Checkboxes detectados</h2>
+        <!--
+          Lista os checkboxes encontrados pelo modelo layout.
+          Marcado (☑) = selected | Não marcado (☐) = unselected
+          Cada item tem um atributo data-idx para ser destacado
+          quando o usuário clicar no retângulo correspondente no preview.
+        -->
+        <ul class="lista-checkboxes" id="lista-selecoes"></ul>
+      </div>
+
+      <!-- Card: Tabelas detectadas (só aparece com modelo layout) -->
+      <div class="card" id="card-tabelas">
+        <h2>🗂️ Tabela detectada</h2>
+        <!--
+          Renderiza a primeira tabela extraída pelo modelo layout
+          em formato HTML de fácil leitura.
+          Útil para documentos como formulários de exame que têm
+          colunas de exames organizados em linhas e colunas.
+        -->
+        <div id="tabela-conteudo" style="overflow-x:auto;"></div>
       </div>
 
       <!-- Card: Texto extraído -->
@@ -538,6 +616,14 @@
         // ETAPA 4: desenha os retângulos OCR sobre o preview
         desenharRetangulos(dados.linhas, dados.pagina, dados.selecoes);
 
+        // ETAPA 5: exibe tabelas e checkboxes quando modelo=layout
+        if (dados.selecoes && dados.selecoes.length > 0) {
+          mostrarSelecoes(dados.selecoes);
+        }
+        if (dados.tabelas && dados.tabelas.length > 0) {
+          mostrarTabela(dados.tabelas[0]);
+        }
+
       } catch (err) {
         mostrarStatus("erro", "❌ Erro de conexão com o servidor.");
       }
@@ -569,8 +655,97 @@
     }
 
     function esconderCards() {
-      document.getElementById("card-texto").style.display = "none";
-      document.getElementById("card-info").style.display  = "none";
+      document.getElementById("card-texto").style.display   = "none";
+      document.getElementById("card-info").style.display    = "none";
+      document.getElementById("card-selecoes").style.display = "none";
+      document.getElementById("card-tabelas").style.display  = "none";
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Função: mostrarSelecoes
+    //
+    // Renderiza a lista de checkboxes detectados pelo modelo layout.
+    // Cada item exibe: estado (☑ ou ☐), índice e confiança.
+    // Cada <li> tem um data-idx para ser destacado ao clicar
+    // no retângulo correspondente no canvas de overlay.
+    // ─────────────────────────────────────────────────────────
+    function mostrarSelecoes(selecoes) {
+      const lista = document.getElementById("lista-selecoes");
+      lista.innerHTML = "";
+
+      selecoes.forEach(function(sel, idx) {
+        const li = document.createElement("li");
+        li.setAttribute("data-idx", idx);
+
+        const icone    = sel.estado === "selected" ? "☑" : "☐";
+        const rotulo   = sel.estado === "selected" ? "Marcado" : "Não marcado";
+        const pct      = Math.round(sel.confianca * 100);
+        const cor      = sel.estado === "selected" ? "#e67700" : "#777";
+
+        li.innerHTML =
+          `<span style="font-size:1.1rem;color:${cor}">${icone}</span>` +
+          `<span style="color:${cor};font-weight:${sel.estado === 'selected' ? 'bold' : 'normal'}">${rotulo}</span>` +
+          `<span style="color:#aaa;font-size:0.78rem;margin-left:auto">${pct}% confiança</span>`;
+
+        lista.appendChild(li);
+      });
+
+      document.getElementById("card-selecoes").style.display = "block";
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Função: mostrarTabela
+    //
+    // Recebe a primeira tabela extraída pelo modelo layout
+    // e renderiza como uma <table> HTML legível.
+    //
+    // A tabela do Azure é uma lista plana de células com:
+    //   { texto, linha, coluna }
+    //
+    // Reconstruimos a matriz 2D: grade[linha][coluna] = texto
+    // e renderizamos linha a linha.
+    // ─────────────────────────────────────────────────────────
+    function mostrarTabela(tabela) {
+      // Monta uma matriz vazia com as dimensões corretas
+      const nLinhas  = tabela.linhas;
+      const nColunas = tabela.colunas;
+      const grade    = [];
+      for (let i = 0; i < nLinhas; i++) {
+        grade.push(new Array(nColunas).fill(""));
+      }
+
+      // Preenche a matriz com o conteúdo de cada célula
+      tabela.celulas.forEach(function(cel) {
+        // Limpa marcadores do DI como ":unselected:" e ":selected:"
+        let texto = cel.texto
+          .replace(/:unselected:/g, "☐")
+          .replace(/:selected:/g, "☑");
+        grade[cel.linha][cel.coluna] = texto;
+      });
+
+      // Monta o HTML da tabela
+      let html = "<table class='tabela-extraida'>";
+
+      // Primeira linha vira cabeçalho (<th>)
+      html += "<thead><tr>";
+      grade[0].forEach(function(cel) {
+        html += `<th>${cel || ""}</th>`;
+      });
+      html += "</tr></thead>";
+
+      // Demais linhas viram <td>
+      html += "<tbody>";
+      for (let i = 1; i < nLinhas; i++) {
+        html += "<tr>";
+        grade[i].forEach(function(cel) {
+          html += `<td>${cel || ""}</td>`;
+        });
+        html += "</tr>";
+      }
+      html += "</tbody></table>";
+
+      document.getElementById("tabela-conteudo").innerHTML = html;
+      document.getElementById("card-tabelas").style.display = "block";
     }
 
     // Limpa o canvas de overlay (retângulos OCR)
@@ -712,7 +887,8 @@
       }
 
       if (selecoes) {
-        for (const sel of selecoes) {
+        for (let i = 0; i < selecoes.length; i++) {
+          const sel = selecoes[i];
           const b = sel.box;
           if (!b || b.length < 8) continue;
           const xs = [b[0], b[2], b[4], b[6]];
@@ -723,6 +899,7 @@
             w: (Math.max(...xs) - Math.min(...xs)) * fatorX,
             h: (Math.max(...ys) - Math.min(...ys)) * fatorY,
             texto: sel.estado === "selected" ? "☑ Marcado" : "☐ Não marcado",
+            idx: i,   // índice para destacar na lista de checkboxes
           });
         }
       }
@@ -755,6 +932,40 @@
           tooltip.style.display = "block";
         } else {
           tooltip.style.display = "none";
+        }
+      };
+
+      // ── Clique: destaca o item correspondente na lista de checkboxes ──
+      overlay.onclick = function (e) {
+        const overlayRect = overlay.getBoundingClientRect();
+        const mx = e.clientX - overlayRect.left;
+        const my = e.clientY - overlayRect.top;
+        const escalaX = overlay.width  / overlayRect.width;
+        const escalaY = overlay.height / overlayRect.height;
+        const px = mx * escalaX;
+        const py = my * escalaY;
+
+        // Encontra a área clicada (percorre de trás pra frente para pegar a menor)
+        const encontrado = areas.slice().reverse().find(
+          a => px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h
+        );
+
+        if (!encontrado || encontrado.idx === undefined) return;
+
+        // Remove destaque de todos os itens
+        document.querySelectorAll("#lista-selecoes li").forEach(li => {
+          li.classList.remove("linha-destacada");
+        });
+
+        // Destaca o item correspondente e rola a lista até ele
+        const itemDestacado = document.querySelector(
+          `#lista-selecoes li[data-idx="${encontrado.idx}"]`
+        );
+        if (itemDestacado) {
+          itemDestacado.classList.add("linha-destacada");
+          itemDestacado.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          // Remove o destaque após 2 segundos
+          setTimeout(() => itemDestacado.classList.remove("linha-destacada"), 2000);
         }
       };
 
