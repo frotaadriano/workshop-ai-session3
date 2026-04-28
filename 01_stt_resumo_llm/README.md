@@ -43,8 +43,8 @@ python.exe -m pip install --upgrade pip
 # 3. Instalar as dependências
 pip install -r requirements.txt
 
-# 4. Rodar a aplicação
-uvicorn app:app --reload
+# 4. Rodar a aplicação na porta 8001
+uvicorn app:app --reload --port 8001 
 ```
 
 Acesse em: [http://localhost:8000](http://localhost:8000)
