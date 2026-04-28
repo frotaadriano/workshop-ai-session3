@@ -33,7 +33,19 @@ AZURE_OPENAI_CHAT_DEPLOYMENT = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT", "gpt-4o
 
 AZURE_SPEECH_KEY    = os.getenv("AZURE_SPEECH_KEY")
 AZURE_SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION", "eastus")
-AZURE_SPEECH_VOICE  = os.getenv("AZURE_SPEECH_VOICE_NAME", "pt-BR-FranciscaNeural")
+
+# -------------------------------------------------------
+# Chaveamento HD vs Standard
+# -------------------------------------------------------
+# AZURE_SPEECH_USE_HD = "true"  -> usa voz HD (Dragon HD)
+# AZURE_SPEECH_USE_HD = "false" -> usa voz Standard (Neural comum)
+USAR_VOZ_HD = os.getenv("AZURE_SPEECH_USE_HD", "false").lower() == "true"
+
+VOZ_HD       = os.getenv("AZURE_SPEECH_VOICE_HD",       "pt-BR-Thalita:DragonHDLatestNeural")
+VOZ_STANDARD = os.getenv("AZURE_SPEECH_VOICE_STANDARD", "pt-BR-FranciscaNeural")
+
+# Voz efetiva escolhida com base no flag
+AZURE_SPEECH_VOICE = VOZ_HD if USAR_VOZ_HD else VOZ_STANDARD
 
 # -------------------------------------------------------
 # Inicializa o app FastAPI e os templates HTML
@@ -142,7 +154,8 @@ def gerar_audio(texto: str) -> str:
 </speak>"""
 
     # Log no terminal do servidor para facilitar debug
-    print(f"[TTS] Voz: {AZURE_SPEECH_VOICE} | Região: {AZURE_SPEECH_REGION}")
+    tipo_voz = "HD (Dragon HD)" if USAR_VOZ_HD else "Standard (Neural)"
+    print(f"[TTS] Tipo: {tipo_voz} | Voz: {AZURE_SPEECH_VOICE} | Região: {AZURE_SPEECH_REGION}")
     print(f"[TTS] SSML:\n{ssml}")
 
     # Faz a chamada POST para a REST API

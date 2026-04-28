@@ -1,5 +1,29 @@
 # Changelog — LLM + TTS
 
+## [1.7.0] — 2026-04-28
+
+### Adicionado
+- **Chaveamento entre vozes HD e Standard** via flag `AZURE_SPEECH_USE_HD` no `.env`
+  - `false` → usa voz Standard (`pt-BR-FranciscaNeural`) — rápida e barata
+  - `true`  → usa voz HD (`pt-BR-Thalita:DragonHDLatestNeural`) — premium
+- Novas variáveis de ambiente: `AZURE_SPEECH_VOICE_HD` e `AZURE_SPEECH_VOICE_STANDARD`
+- Removida variável antiga `AZURE_SPEECH_VOICE_NAME`
+- Log no terminal mostra qual tipo de voz está ativo: `[TTS] Tipo: Standard (Neural) | Voz: ...`
+- Seção didática completa no `README.md` explicando os dois tipos de TTS, comparação, formato dos nomes e como alternar
+
+### Validado
+- Voz Standard `pt-BR-FranciscaNeural` → HTTP 200, áudio gerado com sucesso
+- Voz HD `pt-BR-Thalita:DragonHDLatestNeural` → HTTP 200, áudio gerado com sucesso
+- Ambos os modos funcionam pela mesma rota `/processar`
+
+### Arquivos modificados
+- `app.py` — chaveamento HD/Standard via env var
+- `.env` — novas variáveis de configuração
+- `.env.example` — atualizado com as novas variáveis
+- `README.md` — adicionada seção "Tipos de voz no Azure TTS — guia rápido"
+
+---
+
 ## [1.6.0] — 2026-04-28
 
 ### Corrigido — CAUSA RAIZ DEFINITIVA
