@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Search + Mini RAG</title>
+    <style>
+        /* Reset e base */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            padding: 32px 20px;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        /* Cabeçalho */
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 1.9rem;
+            color: #0078d4;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Fluxo explicativo */
+        .fluxo {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .passo {
+            background: #e1f0fc;
+            color: #005fa3;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .seta {
+            color: #aaa;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Formulário de pergunta */
+        .busca-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .busca-form input[type="text"] {
+            flex: 1;
+            padding: 13px 16px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .busca-form input[type="text"]:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+
+        .busca-form button {
+            padding: 13px 22px;
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .busca-form button:hover:not(:disabled) {
+            background-color: #005fa3;
+        }
+
+        .busca-form button:disabled {
+            background-color: #9dc4e8;
+            cursor: not-allowed;
+        }
+
+        /* Status */
+        .status {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 22px;
+            min-height: 20px;
+        }
+
+        /* Cards de resultado */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-titulo {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #0078d4;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: #444;
+            line-height: 1.65;
+        }
+
+        /* Trechos recuperados */
+        .trecho {
+            background: #f5f9fd;
+            border-left: 4px solid #0078d4;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+
+        .trecho:last-child {
+            margin-bottom: 0;
+        }
+
+        .trecho-numero {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #0078d4;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .trecho-titulo {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .trecho-conteudo {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Resposta final */
+        .resposta-texto {
+            white-space: pre-wrap;
+            line-height: 1.75;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        /* Nota RAG */
+        .nota-rag {
+            background: #e8f4fd;
+            border: 1px solid #b3d7f5;
+            border-radius: 10px;
+            padding: 18px 22px;
+            font-size: 0.9rem;
+            color: #1a5f8a;
+            line-height: 1.65;
+        }
+
+        .nota-rag strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .nota-rag em {
+            color: #777;
+            font-size: 0.85rem;
+        }
+
+        /* Utilitário: ocultar elementos */
+        .oculto {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Cabeçalho -->
+        <header>
+            <h1>🔍 AI Search + Mini RAG</h1>
+            <p>
+                Demonstração didática de busca semântica com recuperação de contexto (RAG).<br />
+                Pergunta → Azure AI Search → contexto → Azure OpenAI → resposta fundamentada.
+            </p>
+        </header>
+
+        <!-- Fluxo visual simplificado -->
+        <div class="fluxo">
+            <span class="passo">1. Pergunta</span>
+            <span class="seta">→</span>
+            <span class="passo">2. AI Search</span>
+            <span class="seta">→</span>
+            <span class="passo">3. Contexto</span>
+            <span class="seta">→</span>
+            <span class="passo">4. Azure OpenAI</span>
+            <span class="seta">→</span>
+            <span class="passo">5. Resposta</span>
+        </div>
+
+        <!-- Formulário -->
+        <div class="busca-form">
+            <input
+                type="text"
+                id="campoPergunta"
+                placeholder="Digite sua pergunta aqui..."
+                onkeydown="if(event.key === 'Enter') buscarEResponder()"
+            />
+            <button id="botaoBuscar" onclick="buscarEResponder()">
+                Buscar e Responder
+            </button>
+        </div>
+
+        <!-- Status da operação -->
+        <div class="status" id="status"></div>
+
+        <!-- Card: Pergunta enviada -->
+        <div class="card oculto" id="cardPergunta">
+            <div class="card-titulo">📌 Pergunta Enviada</div>
+            <p id="textoPergunta"></p>
+        </div>
+
+        <!-- Card: Trechos recuperados do AI Search -->
+        <div class="card oculto" id="cardTrechos">
+            <div class="card-titulo">📚 Trechos Recuperados — Azure AI Search</div>
+            <div id="listaTrechos"></div>
+        </div>
+
+        <!-- Card: Resposta final do LLM -->
+        <div class="card oculto" id="cardResposta">
+            <div class="card-titulo">💬 Resposta Final — Azure OpenAI</div>
+            <p class="resposta-texto" id="textoResposta"></p>
+        </div>
+
+        <!-- Nota explicativa sobre o fluxo RAG -->
+        <div class="nota-rag oculto" id="notaRag">
+            <strong>💡 Como funciona este Mini RAG?</strong>
+            Esta demo mostra um fluxo simplificado de <strong>RAG</strong>
+            (<em>Retrieval-Augmented Generation</em> — geração aumentada por recuperação):
+            <br /><br />
+            Primeiro, buscamos os trechos mais relevantes no <strong>Azure AI Search</strong>.
+            Depois, montamos um prompt incluindo esses trechos como contexto e enviamos ao
+            <strong>Azure OpenAI</strong>. O modelo gera a resposta <em>com base no que foi recuperado</em>,
+            não apenas no seu conhecimento geral.
+            <br /><br />
+            <em>
+                Importante: este é um fluxo demonstrativo para workshop.
+                Um pipeline RAG de produção envolve chunking, embeddings, re-ranking e muito mais.
+            </em>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * Função principal — orquestra o fluxo RAG pelo lado do cliente.
+         * 1. Lê a pergunta do campo de texto
+         * 2. Envia ao backend via POST /perguntar
+         * 3. Exibe os resultados nos cards
+         */
+        async function buscarEResponder() {
+            const campo = document.getElementById('campoPergunta');
+            const botao = document.getElementById('botaoBuscar');
+            const status = document.getElementById('status');
+            const pergunta = campo.value.trim();
+
+            // Validação no frontend
+            if (!pergunta) {
+                status.textContent = '⚠️ Digite uma pergunta antes de buscar.';
+                return;
+            }
+
+            // Estado: carregando
+            botao.disabled = true;
+            status.textContent = '⏳ Buscando trechos e gerando resposta... aguarde.';
+            ocultarResultados();
+
+            try {
+                // Chama o backend
+                const resposta = await fetch('/perguntar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pergunta })
+                });
+
+                const dados = await resposta.json();
+
+                // Se o backend retornou erro, exibe e para
+                if (dados.erro) {
+                    status.textContent = `❌ Erro: ${dados.erro}`;
+                    return;
+                }
+
+                // Exibe a pergunta enviada
+                document.getElementById('textoPergunta').textContent = dados.pergunta;
+                mostrar('cardPergunta');
+
+                // Exibe os trechos recuperados
+                const lista = document.getElementById('listaTrechos');
+                lista.innerHTML = '';
+
+                if (dados.trechos && dados.trechos.length > 0) {
+                    dados.trechos.forEach((trecho, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'trecho';
+                        div.innerHTML = `
+                            <div class="trecho-numero">Trecho ${i + 1}</div>
+                            <div class="trecho-titulo">${trecho.titulo}</div>
+                            <div class="trecho-conteudo">${trecho.conteudo}</div>
+                        `;
+                        lista.appendChild(div);
+                    });
+                } else {
+                    lista.innerHTML = '<p>Nenhum trecho relevante encontrado no índice.</p>';
+                }
+                mostrar('cardTrechos');
+
+                // Exibe a resposta final
+                document.getElementById('textoResposta').textContent = dados.resposta;
+                mostrar('cardResposta');
+
+                // Exibe a nota explicativa sobre o RAG
+                mostrar('notaRag');
+
+                status.textContent = '✅ Resposta gerada com sucesso.';
+
+            } catch (erro) {
+                // Erro de conexão com o backend
+                status.textContent = `❌ Erro de conexão: ${erro.message}`;
+            } finally {
+                botao.disabled = false;
+            }
+        }
+
+        /** Exibe um elemento pelo ID (remove a classe 'oculto') */
+        function mostrar(id) {
+            document.getElementById(id).classList.remove('oculto');
+        }
+
+        /** Oculta todos os cards de resultado */
+        function ocultarResultados() {
+            ['cardPergunta', 'cardTrechos', 'cardResposta', 'notaRag'].forEach(id => {
+                document.getElementById(id).classList.add('oculto');
+            });
+        }
+    </script>
+</body>
+</html>
