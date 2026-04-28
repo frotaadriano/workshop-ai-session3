@@ -1,5 +1,28 @@
 # Changelog — LLM + TTS
 
+## [1.8.0] — 2026-04-28
+
+### Adicionado
+- **Seletor de voz na própria interface** — agora a UI permite escolher dinamicamente:
+  - **Toggle HD vs Standard** (botões com estilo "pill")
+  - **Dropdown de vozes** que se atualiza automaticamente conforme o tipo selecionado
+  - 15 vozes Standard pt-BR (Francisca, Antonio, Brenda, Donato, Elza, Fabio, Giovanna, Humberto, Julio, Leila, Leticia, Manuela, Nicolau, Valerio, Yara)
+  - 1 voz HD pt-BR (Thalita Dragon HD)
+- Catálogo de vozes definido no `app.py` (`VOZES_STANDARD`, `VOZES_HD`) e injetado no template via Jinja
+- Endpoint `/processar` agora aceita `voz` e `usar_hd` no body (com fallback para o `.env`)
+- Resposta do `/processar` retorna `voz_usada` e `tipo_voz` para a UI exibir
+- Card de áudio mostra qual voz foi usada após a síntese
+
+### Alterado
+- `app.py`: função `gerar_audio(texto, voz, usar_hd)` agora recebe parâmetros explícitos
+- `templates/index.html`: novo card de seleção de voz acima do textarea, novos estilos CSS para toggle e select
+
+### Arquivos modificados
+- `app.py` — catálogo de vozes, novos parâmetros em `gerar_audio`, contexto Jinja
+- `templates/index.html` — UI de seleção de voz, novo CSS, JS atualizado
+
+---
+
 ## [1.7.0] — 2026-04-28
 
 ### Adicionado

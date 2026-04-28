@@ -54,10 +54,40 @@ app = FastAPI(title="LLM + TTS Demo")
 templates = Jinja2Templates(directory="templates")
 
 # -------------------------------------------------------
+# Catálogo de vozes pt-BR disponíveis no Azure Speech
+# -------------------------------------------------------
+# Vozes Standard (Neural) — rápidas, baratas, formato: <locale>-<nome>Neural
+VOZES_STANDARD = [
+    {"id": "pt-BR-FranciscaNeural", "label": "Francisca (feminina)"},
+    {"id": "pt-BR-AntonioNeural",  "label": "Antonio (masculina)"},
+    {"id": "pt-BR-BrendaNeural",   "label": "Brenda (feminina)"},
+    {"id": "pt-BR-DonatoNeural",   "label": "Donato (masculina)"},
+    {"id": "pt-BR-ElzaNeural",     "label": "Elza (feminina)"},
+    {"id": "pt-BR-FabioNeural",    "label": "Fabio (masculina)"},
+    {"id": "pt-BR-GiovannaNeural", "label": "Giovanna (feminina)"},
+    {"id": "pt-BR-HumbertoNeural", "label": "Humberto (masculina)"},
+    {"id": "pt-BR-JulioNeural",    "label": "Julio (masculina)"},
+    {"id": "pt-BR-LeilaNeural",    "label": "Leila (feminina)"},
+    {"id": "pt-BR-LeticiaNeural",  "label": "Leticia (feminina)"},
+    {"id": "pt-BR-ManuelaNeural",  "label": "Manuela (feminina)"},
+    {"id": "pt-BR-NicolauNeural",  "label": "Nicolau (masculina)"},
+    {"id": "pt-BR-ValerioNeural",  "label": "Valerio (masculina)"},
+    {"id": "pt-BR-YaraNeural",     "label": "Yara (feminina)"},
+]
+
+# Vozes HD (Dragon HD) — premium, formato: <locale>-<nome>:DragonHDLatestNeural
+VOZES_HD = [
+    {"id": "pt-BR-Thalita:DragonHDLatestNeural", "label": "Thalita HD (feminina, premium)"},
+]
+
+
+# -------------------------------------------------------
 # Modelo de dados para o corpo da requisição POST
 # -------------------------------------------------------
 class EntradaTexto(BaseModel):
     texto: str
+    voz: str | None = None      # Nome técnico da voz (ex: pt-BR-FranciscaNeural)
+    usar_hd: bool | None = None # True = HD, False = Standard
 
 
 # -------------------------------------------------------
@@ -65,7 +95,15 @@ class EntradaTexto(BaseModel):
 # -------------------------------------------------------
 @app.get("/")
 def pagina_inicial(request: Request):
-    return templates.TemplateResponse(request, "index.html")
+    # Passa o catálogo de vozes e o padrão do .env para o template
+    contexto = {
+        "vozes_standard":   VOZES_STANDARD,
+        "vozes_hd":         VOZES_HD,
+        "padrao_usar_hd":   USAR_VOZ_HD,
+        "padrao_voz_hd":    VOZ_HD,
+        "padrao_voz_std":   VOZ_STANDARD,
+    }
+    return templates.TemplateResponse(request, "index.html", contexto)
 
 
 # -------------------------------------------------------
@@ -130,8 +168,9 @@ def obter_token_speech() -> str:
 # -------------------------------------------------------
 # FUNÇÃO: gerar_audio
 # Chama a REST API do Azure Speech TTS e retorna o áudio em base64.
+# Recebe a voz e o tipo (HD ou Standard) como parâmetros.
 # -------------------------------------------------------
-def gerar_audio(texto: str) -> str:
+def gerar_audio(texto: str, voz: str, usar_hd: bool) -> str:
     # Obtém um token Bearer — mais confiável que a chave direta para vozes HD
     token = obter_token_speech()
 
@@ -148,26 +187,22 @@ def gerar_audio(texto: str) -> str:
     # SSML: html.escape() protege contra caracteres XML no texto gerado pelo LLM
     texto_escapado = html.escape(texto)
     ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="pt-BR">
-  <voice name="{AZURE_SPEECH_VOICE}">
+  <voice name="{voz}">
     {texto_escapado}
   </voice>
 </speak>"""
 
     # Log no terminal do servidor para facilitar debug
-    tipo_voz = "HD (Dragon HD)" if USAR_VOZ_HD else "Standard (Neural)"
-    print(f"[TTS] Tipo: {tipo_voz} | Voz: {AZURE_SPEECH_VOICE} | Região: {AZURE_SPEECH_REGION}")
-    print(f"[TTS] SSML:\n{ssml}")
+    tipo_voz = "HD (Dragon HD)" if usar_hd else "Standard (Neural)"
+    print(f"[TTS] Tipo: {tipo_voz} | Voz: {voz} | Região: {AZURE_SPEECH_REGION}")
 
     # Faz a chamada POST para a REST API
     resposta = requests.post(url, headers=cabecalhos, data=ssml.encode("utf-8"), timeout=30)
 
     # Log da resposta para debug
-    print(f"[TTS] HTTP {resposta.status_code} | Headers: {dict(resposta.headers)}")
+    print(f"[TTS] HTTP {resposta.status_code} | bytes: {len(resposta.content)}")
     if resposta.status_code != 200:
         print(f"[TTS] Corpo do erro: {resposta.text!r}")
-
-    # Verifica se a chamada foi bem-sucedida
-    if resposta.status_code != 200:
         raise RuntimeError(
             f"Erro no TTS (HTTP {resposta.status_code}): {resposta.text}"
         )
@@ -192,17 +227,28 @@ async def processar(entrada: EntradaTexto):
             content={"erro": "O texto enviado está vazio."},
         )
 
+    # Determina HD ou Standard — prioriza o que veio na requisição, senão usa o .env
+    usar_hd = entrada.usar_hd if entrada.usar_hd is not None else USAR_VOZ_HD
+
+    # Determina a voz — prioriza a que veio na requisição, senão usa a padrão do tipo
+    if entrada.voz:
+        voz = entrada.voz
+    else:
+        voz = VOZ_HD if usar_hd else VOZ_STANDARD
+
     try:
         # Etapa 1: gera o resumo com o Azure OpenAI
         resumo = gerar_resumo(texto)
 
         # Etapa 2: gera o áudio do resumo com o Azure Speech TTS
-        audio_base64 = gerar_audio(resumo)
+        audio_base64 = gerar_audio(resumo, voz=voz, usar_hd=usar_hd)
 
         # Retorna resumo e áudio para o frontend
         return JSONResponse(content={
             "resumo":       resumo,
             "audio_base64": audio_base64,
+            "voz_usada":    voz,
+            "tipo_voz":     "HD" if usar_hd else "Standard",
         })
 
     except Exception as ex:

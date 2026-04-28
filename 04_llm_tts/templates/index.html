@@ -5,6 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LLM + TTS — Workshop IA</title>
   <style>
+    /* ---- Seletor de voz (toggle HD + dropdown) ---- */
+    .voice-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .voice-selector label {
+      font-size: 0.85rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    /* Toggle switch HD vs Standard */
+    .toggle-group {
+      display: inline-flex;
+      background: #f0f0f0;
+      border-radius: 999px;
+      padding: 3px;
+      gap: 0;
+    }
+    .toggle-group button {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .toggle-group button.ativo {
+      background: #FF6B00;
+      color: #fff;
+      box-shadow: 0 1px 4px rgba(255,107,0,0.3);
+    }
+
+    /* Dropdown de vozes */
+    select#select-voz {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid #dde1e7;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 0.88rem;
+      color: #222;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select#select-voz:focus {
+      outline: none;
+      border-color: #FF6B00;
+      background: #fff;
+    }
+
     /* ---- Reset e base ---- */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -229,6 +287,18 @@
     <!-- Formulário de entrada -->
     <div class="card">
       <h2>✏️ Texto de entrada <span class="badge">Passo 1</span></h2>
+
+      <!-- Seletor de voz: toggle HD vs Standard + dropdown de voz -->
+      <div class="voice-selector">
+        <label>Qualidade:</label>
+        <div class="toggle-group" id="toggle-tipo">
+          <button type="button" data-tipo="standard" class="{% if not padrao_usar_hd %}ativo{% endif %}">Standard</button>
+          <button type="button" data-tipo="hd" class="{% if padrao_usar_hd %}ativo{% endif %}">HD ✨</button>
+        </div>
+        <label>Voz:</label>
+        <select id="select-voz"></select>
+      </div>
+
       <textarea
         id="texto-input"
         placeholder="Cole aqui um comunicado, e-mail, notícia ou qualquer texto para resumir..."
@@ -260,7 +330,7 @@
       <!-- Player de áudio -->
       <div class="card audio-section">
         <h2>🔊 Ouça o resumo <span class="badge">TTS</span></h2>
-        <p>Áudio gerado pelo Azure Speech com a leitura do resumo acima.</p>
+        <p id="info-voz">Áudio gerado pelo Azure Speech.</p>
         <audio id="player-audio" controls></audio>
       </div>
 
@@ -273,6 +343,50 @@
   </footer>
 
   <script>
+    // -------------------------------------------------------
+    // Catálogo de vozes injetado pelo backend (via Jinja)
+    // -------------------------------------------------------
+    const VOZES_STANDARD = {{ vozes_standard | tojson }};
+    const VOZES_HD       = {{ vozes_hd | tojson }};
+    const PADRAO_VOZ_HD  = {{ padrao_voz_hd  | tojson }};
+    const PADRAO_VOZ_STD = {{ padrao_voz_std | tojson }};
+
+    // Estado atual da UI (HD ou Standard)
+    let tipoAtual = {{ "true" if padrao_usar_hd else "false" }} ? 'hd' : 'standard';
+
+    // -------------------------------------------------------
+    // Preenche o dropdown de vozes conforme o tipo selecionado
+    // -------------------------------------------------------
+    function preencherDropdownVozes() {
+      const select = document.getElementById('select-voz');
+      const lista  = (tipoAtual === 'hd') ? VOZES_HD : VOZES_STANDARD;
+      const padrao = (tipoAtual === 'hd') ? PADRAO_VOZ_HD : PADRAO_VOZ_STD;
+
+      select.innerHTML = '';
+      lista.forEach(voz => {
+        const opt = document.createElement('option');
+        opt.value = voz.id;
+        opt.textContent = voz.label;
+        if (voz.id === padrao) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    // -------------------------------------------------------
+    // Configura o toggle HD vs Standard
+    // -------------------------------------------------------
+    document.querySelectorAll('#toggle-tipo button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#toggle-tipo button').forEach(b => b.classList.remove('ativo'));
+        btn.classList.add('ativo');
+        tipoAtual = btn.dataset.tipo;
+        preencherDropdownVozes();
+      });
+    });
+
+    // Inicializa o dropdown ao carregar a página
+    preencherDropdownVozes();
+
     // -------------------------------------------------------
     // Atualiza o indicador visual de etapas
     // -------------------------------------------------------
@@ -319,11 +433,19 @@
       mostrarStatus('⏳ Enviando para o Azure OpenAI... gerando resumo...', 'processando');
 
       try {
-        // Envia o texto para o backend via POST /processar
+        // Lê a seleção atual da UI
+        const usarHd = (tipoAtual === 'hd');
+        const vozEscolhida = document.getElementById('select-voz').value;
+
+        // Envia o texto + seleção de voz para o backend
         const resposta = await fetch('/processar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ texto: texto })
+          body: JSON.stringify({
+            texto:   texto,
+            voz:     vozEscolhida,
+            usar_hd: usarHd
+          })
         });
 
         const dados = await resposta.json();
@@ -342,6 +464,10 @@
         // Preenche os cards de resultado
         document.getElementById('texto-original').textContent = texto;
         document.getElementById('resumo-gerado').textContent  = dados.resumo;
+
+        // Atualiza a info de voz utilizada
+        document.getElementById('info-voz').textContent =
+          `Áudio gerado pelo Azure Speech — Tipo: ${dados.tipo_voz} | Voz: ${dados.voz_usada}`;
 
         // Configura o player de áudio com o base64 recebido
         const player = document.getElementById('player-audio');
